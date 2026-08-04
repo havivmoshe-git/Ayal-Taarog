@@ -25,6 +25,19 @@ const VARIANTS = [
   { suffix: 'lg', width: 1600, quality: 80 },
 ];
 
+/**
+ * The floorplan is dense Hebrew text and line art, not a photograph. At q72
+ * WebP smears small letterforms into mush, and the whole point of opening it
+ * is to read it — so it keeps full resolution and a much higher quality. The
+ * extra weight is fine: it loads only on demand.
+ */
+const TEXT_HEAVY = new Set(['floorplan']);
+
+const TEXT_VARIANTS = [
+  { suffix: 'sm', width: 900, quality: 86 },
+  { suffix: 'lg', width: 2000, quality: 90 },
+];
+
 await rm(OUT_DIR, { recursive: true, force: true });
 await mkdir(OUT_DIR, { recursive: true });
 
@@ -41,7 +54,7 @@ for (const file of files) {
   const { name } = parse(file);
   const input = join(SOURCE_DIR, file);
 
-  for (const { suffix, width, quality } of VARIANTS) {
+  for (const { suffix, width, quality } of TEXT_HEAVY.has(name) ? TEXT_VARIANTS : VARIANTS) {
     const output = join(OUT_DIR, `${name}-${suffix}.webp`);
     const info = await sharp(input)
       .rotate() // honour EXIF orientation before we strip metadata

@@ -1,4 +1,4 @@
-export type GalleryCategory = 'rooms' | 'food' | 'venue';
+export type GalleryCategory = 'rooms' | 'food' | 'venue' | 'docs';
 
 export type GalleryImage = {
   /** Base filename in public/gallery, without the -sm/-lg suffix. */
@@ -13,6 +13,7 @@ export const categories: { id: GalleryCategory | 'all'; label: string }[] = [
   { id: 'rooms', label: 'חדרי לינה' },
   { id: 'food', label: 'קולינריה' },
   { id: 'venue', label: 'אולם ובית כנסת' },
+  { id: 'docs', label: 'שרטוט' },
 ];
 
 /** Ordered for visual rhythm — the grid alternates between wide venue shots,
@@ -113,6 +114,12 @@ export const images: GalleryImage[] = [
     category: 'food',
     alt: 'מנת ירקות צלויים — פלפל, שום ופלפלון עם עשבי תיבול',
     caption: 'ירקות צלויים בתנור',
+  },
+  {
+    slug: 'floorplan',
+    category: 'docs',
+    alt: 'שרטוט חדרי האירוח של מתחם כאייל תערוג, ובו 10 חדרים סביב היכל בית הכנסת',
+    caption: 'שרטוט ופירוט החדרים',
   },
 ];
 

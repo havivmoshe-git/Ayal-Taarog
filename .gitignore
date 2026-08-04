@@ -7,3 +7,8 @@ dist/
 
 # Generated from assets/source/ by `npm run images`.
 public/gallery/
+
+# The two printed flyers carry the lodging and per-diner price tables, which
+# are deliberately not published. This repository is public, so they are kept
+# out of it entirely rather than merely unlinked from the site.
+assets/private/

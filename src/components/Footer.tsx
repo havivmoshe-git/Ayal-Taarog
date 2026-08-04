@@ -4,7 +4,9 @@ import { GENERAL_ENQUIRY, whatsappLink } from '../lib/whatsapp';
 
 export default function Footer() {
   return (
-    <footer className="bg-navy-900 px-5 pb-10 pt-14 sm:px-6">
+    // Extra bottom padding on phones so the fixed action bar never covers the
+    // last line of contact details.
+    <footer className="bg-navy-900 px-5 pb-28 pt-14 sm:px-6 lg:pb-10">
       <div className="mx-auto w-full max-w-6xl">
         <div className="grid gap-10 md:grid-cols-3">
           <div>

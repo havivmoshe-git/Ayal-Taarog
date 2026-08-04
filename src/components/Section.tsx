@@ -18,7 +18,7 @@ export function SectionHeading({
   dark = false,
 }: Pick<SectionProps, 'eyebrow' | 'title' | 'subtitle' | 'dark'>) {
   return (
-    <Reveal className="mb-10 text-center md:mb-14">
+    <Reveal from="fade" className="mb-8 text-center md:mb-14">
       {eyebrow && (
         <p
           className={`mb-3 font-display text-sm font-bold tracking-[0.25em] ${
@@ -55,7 +55,9 @@ export default function Section({
   dark = false,
 }: SectionProps) {
   return (
-    <section id={id} className={`px-5 py-16 sm:px-6 md:py-24 ${className}`}>
+    // Vertical rhythm is tighter on phones: ten sections at desktop padding
+    // adds well over a screen of pure whitespace to the scroll.
+    <section id={id} className={`px-5 py-12 sm:px-6 sm:py-16 md:py-24 ${className}`}>
       <div className="mx-auto w-full max-w-6xl">
         {(eyebrow || title || subtitle) && (
           <SectionHeading eyebrow={eyebrow} title={title} subtitle={subtitle} dark={dark} />

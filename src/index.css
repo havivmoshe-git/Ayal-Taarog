@@ -83,14 +83,37 @@
   /* Scroll reveal, driven by the IntersectionObserver in Reveal.tsx. */
   .reveal {
     opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+
+  .reveal-up {
+    transform: translateY(28px);
+  }
+
+  /* RTL: "from the start of the line" means from the right. */
+  .reveal-right {
+    transform: translateX(36px);
+  }
+
+  .reveal-left {
+    transform: translateX(-36px);
+  }
+
+  .reveal-scale {
+    transform: scale(0.94);
+  }
+
+  .reveal-fade {
+    filter: blur(6px);
   }
 
   .reveal.is-visible {
     opacity: 1;
     transform: none;
+    filter: none;
   }
 
   /* Hero content animates on load rather than on scroll. */

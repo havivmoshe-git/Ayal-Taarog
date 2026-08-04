@@ -28,6 +28,8 @@ export const hero = {
   subtitle: `${contact.synagogue}, בראשות מו״ר הרב אייל עמרמי שליט״א`,
   location: contact.addressShort,
   ctaPrimary: 'לקבלת הצעה מותאמת',
+  /** Short form for the mobile action bar, where width is scarce. */
+  ctaShort: 'לקבלת הצעה',
   ctaSecondary: 'שיחה בוואטסאפ',
   scrollHint: 'גללו לגלות עוד',
 };

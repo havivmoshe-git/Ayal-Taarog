@@ -21,40 +21,43 @@ export default function Rooms() {
       className="bg-cream-100"
     >
       <div className="grid items-start gap-8 lg:grid-cols-2">
-        <Reveal>
-          <ul className="space-y-3">
-            {rooms.breakdown.map((row) => (
-              <li
+        <div>
+          <ul className="overflow-hidden rounded-2xl border border-cream-200 bg-white">
+            {rooms.breakdown.map((row, i) => (
+              <Reveal
+                as="li"
                 key={row.rooms + row.beds}
-                className="flex items-center gap-4 rounded-xl border border-cream-200 bg-white p-4 sm:p-5"
+                from="right"
+                delay={i * 60}
+                className="flex items-center gap-3 border-b border-cream-200 px-4 py-3 last:border-b-0 sm:px-5 sm:py-4"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-display text-base font-bold text-navy-950 sm:text-lg">
+                  <p className="font-display text-sm font-bold text-navy-950 sm:text-base">
                     {row.rooms}
                   </p>
-                  <p className="mt-0.5 text-sm text-stone-600">{row.beds}</p>
-                  <p className="mt-0.5 text-xs text-stone-500">{row.occupancy}</p>
+                  <p className="mt-0.5 text-[13px] leading-snug text-stone-600">{row.beds}</p>
+                  <p className="text-xs leading-snug text-stone-500">{row.occupancy}</p>
                 </div>
                 <div className="shrink-0 text-center">
-                  <p className="font-display text-2xl font-black text-gold-700 sm:text-3xl">
+                  <p className="ltr-nums font-display text-2xl font-black text-gold-700">
                     {row.people}
                   </p>
-                  <p className="text-xs text-stone-500">נפשות</p>
+                  <p className="text-[10px] text-stone-500">נפשות</p>
                 </div>
-              </li>
+              </Reveal>
             ))}
-
-            <li className="flex items-center gap-4 rounded-xl bg-navy-950 p-5">
-              <div className="min-w-0 flex-1">
-                <p className="font-display text-lg font-bold text-cream-50">{rooms.totalLabel}</p>
-                <p className="mt-0.5 text-xs text-cream-200/70">{rooms.totalNote}</p>
-              </div>
-              <p className="shrink-0 font-display text-xl font-black text-gold-400 sm:text-2xl">
-                {rooms.totalValue}
-              </p>
-            </li>
           </ul>
-        </Reveal>
+
+          <Reveal from="scale" className="mt-3 flex items-center gap-3 rounded-2xl bg-navy-950 px-5 py-4">
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-base font-bold text-cream-50">{rooms.totalLabel}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-cream-200/70">{rooms.totalNote}</p>
+            </div>
+            <p className="shrink-0 font-display text-lg font-black text-gold-400 sm:text-2xl">
+              {rooms.totalValue}
+            </p>
+          </Reveal>
+        </div>
 
         <Reveal delay={100}>
           {/* The plan is dense line art — the thumbnail is only an invitation to
@@ -65,12 +68,14 @@ export default function Rooms() {
             className="group relative block w-full overflow-hidden rounded-2xl border border-cream-200 bg-white p-2"
             aria-label={rooms.planCta}
           >
+            {/* Cropped to its header on phones — the thumbnail only has to say
+                "this is a floorplan, tap it"; reading happens in the lightbox. */}
             <img
               src={galleryUrl(PLAN_SLUG, 'sm')}
               alt={rooms.planAlt}
               loading="lazy"
               decoding="async"
-              className="w-full rounded-xl"
+              className="h-56 w-full rounded-xl object-cover object-top sm:h-72 lg:h-auto"
             />
             <span className="pointer-events-none absolute inset-x-2 bottom-2 flex items-center justify-center gap-2 rounded-lg bg-navy-950/85 py-2.5 font-display text-sm font-bold text-cream-50 backdrop-blur-sm transition-colors group-hover:bg-navy-950">
               <ExpandIcon className="size-4 text-gold-400" />

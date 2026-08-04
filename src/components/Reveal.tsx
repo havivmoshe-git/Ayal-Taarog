@@ -1,15 +1,22 @@
 import { useEffect, useRef, useState, type ElementType, type ReactNode } from 'react';
 
 /**
- * Scroll-triggered fade-up. Replaces an animation library that would have cost
- * ~100KB gzip — roughly twice the size of everything else on the page — for
- * what amounts to one transition. Reveals once and then stops observing.
+ * Scroll-triggered reveal. Replaces an animation library that would have cost
+ * ~100KB gzip for what amounts to a handful of transitions.
+ *
+ * The `from` variants exist so a long page does not animate identically for
+ * fifteen screens — a list that slides in from the right reads differently
+ * from a card that scales up, and that variation is most of what stops a
+ * scroll feeling endless.
  */
+
+type Variant = 'up' | 'right' | 'left' | 'scale' | 'fade';
 
 type RevealProps = {
   children: ReactNode;
   /** Stagger within a group, in ms. */
   delay?: number;
+  from?: Variant;
   className?: string;
   as?: ElementType;
 } & Record<string, unknown>;
@@ -17,6 +24,7 @@ type RevealProps = {
 export default function Reveal({
   children,
   delay = 0,
+  from = 'up',
   className = '',
   as: Tag = 'div',
   ...rest
@@ -28,8 +36,6 @@ export default function Reveal({
     const el = ref.current;
     if (!el) return;
 
-    // Anything already in view on load (the hero's neighbours) should not wait
-    // for a scroll event that may never come on a short screen.
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -37,7 +43,7 @@ export default function Reveal({
           observer.disconnect();
         }
       },
-      { rootMargin: '0px 0px -60px 0px', threshold: 0.05 },
+      { rootMargin: '0px 0px -50px 0px', threshold: 0.03 },
     );
 
     observer.observe(el);
@@ -47,7 +53,7 @@ export default function Reveal({
   return (
     <Tag
       ref={ref}
-      className={`reveal ${shown ? 'is-visible' : ''} ${className}`}
+      className={`reveal reveal-${from} ${shown ? 'is-visible' : ''} ${className}`}
       style={{ transitionDelay: `${delay}ms` }}
       {...rest}
     >

@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+
+/*
+  Palette pulled from the venue photography itself: the blue-and-white ceramic
+  plates, the gold chair frames and cutlery, the cream damask tablecloths.
+*/
+@theme {
+  --color-navy-950: #0b1a2f;
+  --color-navy-900: #102540;
+  --color-navy-800: #16304f;
+  --color-navy-700: #1f4269;
+
+  /* Deep antique gold, reserved for text and icons on the cream backgrounds —
+     the brighter golds below drop under 4.5:1 there and fail WCAG AA. */
+  --color-gold-700: #7d6412;
+  --color-gold-600: #a8871d;
+  --color-gold-500: #c9a227;
+  --color-gold-400: #d9b641;
+  --color-gold-300: #e5c76b;
+  --color-gold-100: #f5e9c4;
+
+  --color-cream-50: #fbf7ef;
+  --color-cream-100: #f4ede0;
+  --color-cream-200: #e9dfcc;
+
+  --color-stone-700: #4a443c;
+  --color-stone-600: #6b6257;
+  --color-stone-500: #8b8175;
+
+  --font-display: 'Heebo', system-ui, sans-serif;
+  --font-body: 'Assistant', system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Anchor targets must clear the sticky header. */
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-cream-50);
+    color: var(--color-stone-700);
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.7;
+    /* A phone-width page must never scroll sideways. */
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    color: var(--color-navy-950);
+    text-wrap: balance;
+  }
+
+  /* Numerals and dates stay LTR inside RTL prose. */
+  .ltr-nums {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-500);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: var(--color-gold-300);
+    color: var(--color-navy-950);
+  }
+}
+
+@layer components {
+  /* Scroll reveal, driven by the IntersectionObserver in Reveal.tsx. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Hero content animates on load rather than on scroll. */
+  .hero-in {
+    animation: hero-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes hero-in {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .fade-in {
+    animation: fade-in 0.25s ease both;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .pop-in {
+    animation: pop-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.8) translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Thin gold rule used instead of grey borders between sections. */
+  .rule-gold {
+    background-image: linear-gradient(
+      to left,
+      transparent,
+      var(--color-gold-500) 20%,
+      var(--color-gold-500) 80%,
+      transparent
+    );
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    /* 48px min height keeps every CTA comfortably tappable. */
+    min-height: 3rem;
+    padding: 0.75rem 1.75rem;
+    border-radius: 9999px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn-gold {
+    background-color: var(--color-gold-500);
+    color: var(--color-navy-950);
+    box-shadow: 0 8px 24px -8px rgb(201 162 39 / 0.6);
+  }
+
+  .btn-gold:hover {
+    background-color: var(--color-gold-400);
+  }
+
+  .btn-outline {
+    border: 1.5px solid rgb(255 255 255 / 0.55);
+    color: #fff;
+    backdrop-filter: blur(6px);
+    background-color: rgb(255 255 255 / 0.08);
+  }
+
+  .btn-outline:hover {
+    background-color: rgb(255 255 255 / 0.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

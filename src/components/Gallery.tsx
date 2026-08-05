@@ -1,29 +1,31 @@
 import { useMemo, useState } from 'react';
-import { categories, galleryUrl, images, type GalleryCategory } from '../data/gallery';
-import { contact, gallerySection } from '../data/content';
+import type { GalleryData } from '../content/schema';
+import { useContact } from '../content/ContentContext';
+import { imageSrc } from '../lib/media';
 import Section from './Section';
 import Lightbox from './Lightbox';
 import { ExpandIcon } from './Icons';
 
-export default function Gallery() {
-  const [active, setActive] = useState<GalleryCategory | 'all'>('all');
+export default function Gallery({ data, id }: { data: GalleryData; id: string }) {
+  const contact = useContact();
+  const [active, setActive] = useState<string>('all');
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const visible = useMemo(
-    () => (active === 'all' ? images : images.filter((img) => img.category === active)),
-    [active],
+    () => (active === 'all' ? data.images : data.images.filter((img) => img.category === active)),
+    [active, data.images],
   );
 
   return (
     <Section
-      id="gallery"
+      id={id}
       eyebrow="גלריה"
-      title={gallerySection.title}
-      subtitle={gallerySection.subtitle}
+      title={data.title}
+      subtitle={data.subtitle}
       className="bg-cream-100"
     >
       <div role="tablist" aria-label="סינון גלריה" className="mb-7 flex flex-wrap justify-center gap-2">
-        {categories.map((cat) => {
+        {data.categories.map((cat) => {
           const isActive = active === cat.id;
           return (
             <button
@@ -56,14 +58,14 @@ export default function Gallery() {
       >
         {visible.map((img, i) => (
           <button
-            key={img.slug}
+            key={img.slug ?? img.urlSmall ?? String(i)}
             type="button"
             onClick={() => setOpenIndex(i)}
             aria-label={`הגדלת תמונה: ${img.caption}`}
             className="group relative aspect-[4/3] shrink-0 basis-[72%] snap-center overflow-hidden rounded-xl bg-cream-200 text-right sm:aspect-[3/2] sm:basis-auto"
           >
             <img
-              src={galleryUrl(img.slug, 'sm')}
+              src={imageSrc(img, 'sm')}
               alt={img.alt}
               loading={i < 3 ? 'eager' : 'lazy'}
               decoding="async"
@@ -81,7 +83,7 @@ export default function Gallery() {
       </div>
 
       <p className="mt-4 text-center text-xs text-stone-500 sm:hidden">
-        החליקו לצדדים · הקישו להגדלה
+        {data.swipeHint}
       </p>
 
       <div className="mt-8 text-center">
@@ -91,7 +93,7 @@ export default function Gallery() {
           rel="noopener noreferrer"
           className="btn border-2 border-navy-950 text-navy-950 hover:bg-navy-950 hover:text-cream-50"
         >
-          {gallerySection.catalogCta}
+          {data.catalogCta}
         </a>
       </div>
 

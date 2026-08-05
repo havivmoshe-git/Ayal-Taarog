@@ -1,8 +1,12 @@
-import { contact, footer, hero, nav } from '../data/content';
+import { useContact, useContent, useSection } from '../content/ContentContext';
 import { PhoneIcon, PinIcon, WhatsAppIcon } from './Icons';
 import { GENERAL_ENQUIRY, whatsappLink } from '../lib/whatsapp';
 
 export default function Footer() {
+  const contact = useContact();
+  const { content, nav } = useContent();
+  const footer = content.footer;
+  const hero = useSection('hero')?.data;
   return (
     // Extra bottom padding on phones so the fixed action bar never covers the
     // last line of contact details.
@@ -10,7 +14,7 @@ export default function Footer() {
       <div className="mx-auto w-full max-w-6xl">
         <div className="grid gap-10 md:grid-cols-3">
           <div>
-            <p className="font-display text-2xl font-black text-cream-50">{hero.brand}</p>
+            <p className="font-display text-2xl font-black text-cream-50">{hero?.brand}</p>
             <p className="mt-1 font-display text-sm font-semibold text-gold-300">{footer.tagline}</p>
             <p className="mt-4 text-sm leading-relaxed text-cream-200/75">{footer.about}</p>
           </div>
@@ -73,13 +77,13 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href={whatsappLink(GENERAL_ENQUIRY)}
+                  href={whatsappLink(contact.whatsappNumber, GENERAL_ENQUIRY)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-gold mt-1 !min-h-11 !px-5 !text-sm"
                 >
                   <WhatsAppIcon className="size-4" />
-                  {hero.ctaSecondary}
+                  {hero?.ctaSecondary}
                 </a>
               </li>
             </ul>
@@ -89,7 +93,7 @@ export default function Footer() {
         <div className="rule-gold mt-12 h-px w-full opacity-30" />
 
         <p className="mt-5 text-center text-xs text-cream-200/50">
-          © {new Date().getFullYear()} {hero.brand} · {footer.rights}
+          © {new Date().getFullYear()} {hero?.brand} · {footer.rights}
         </p>
       </div>
     </footer>

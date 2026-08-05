@@ -1,18 +1,18 @@
-import { contact } from '../data/content';
+import type { LocationData } from '../content/schema';
+import { useContact } from '../content/ContentContext';
 import Section from './Section';
 import Reveal from './Reveal';
 import { PhoneIcon, PinIcon } from './Icons';
 
-const MAP_EMBED =
-  'https://www.google.com/maps?q=%D7%94%D7%A8%D7%91%20%D7%9E%D7%9F%20%D7%94%D7%94%D7%A8%204%20%D7%94%D7%A8%20%D7%97%D7%95%D7%9E%D7%94%20%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D&hl=he&z=15&output=embed';
+export default function Location({ data, id }: { data: LocationData; id: string }) {
+  const contact = useContact();
 
-export default function Location() {
   return (
     <Section
-      id="location"
-      eyebrow="איפה אנחנו"
-      title="מיקום והגעה"
-      subtitle="בלב שכונת הר חומה בירושלים — כמה דקות מהכניסה לעיר ומכביש 60, עם חניה נוחה בסביבה."
+      id={id}
+      eyebrow={data.eyebrow}
+      title={data.title}
+      subtitle={data.subtitle}
       className="bg-cream-50"
     >
       <div className="grid items-stretch gap-6 lg:grid-cols-5">
@@ -43,7 +43,7 @@ export default function Location() {
                 rel="noopener noreferrer"
                 className="btn btn-gold flex-1 !text-sm"
               >
-                ניווט ב-Waze
+                {data.wazeCta}
               </a>
               <a
                 href={contact.mapsUrl}
@@ -51,7 +51,7 @@ export default function Location() {
                 rel="noopener noreferrer"
                 className="btn flex-1 border-2 border-navy-950 !text-sm text-navy-950 hover:bg-navy-950 hover:text-cream-50"
               >
-                Google Maps
+                {data.mapsCta}
               </a>
             </div>
           </div>
@@ -60,7 +60,7 @@ export default function Location() {
         <Reveal delay={100} className="lg:col-span-3">
           <div className="h-72 overflow-hidden rounded-2xl border border-cream-200 sm:h-96 lg:h-full lg:min-h-[24rem]">
             <iframe
-              src={MAP_EMBED}
+              src={data.mapEmbed}
               title="מפת המיקום של מתחם האירוח כאייל תערוג"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"

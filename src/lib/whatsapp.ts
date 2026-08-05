@@ -1,5 +1,3 @@
-import { contact } from '../data/content';
-
 export type Inquiry = {
   name: string;
   dateGregorian: string;
@@ -43,11 +41,11 @@ export function buildInquiryMessage(inquiry: Inquiry): string {
 }
 
 /** Full wa.me link with the message encoded. */
-export function whatsappLink(message?: string): string {
-  const base = `https://wa.me/${contact.whatsappNumber}`;
+export function whatsappLink(number: string, message?: string): string {
+  const base = `https://wa.me/${number}`;
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
 
-/** Default opener for the floating button and header CTA. */
+/** Default opener for the action bar and header CTA. */
 export const GENERAL_ENQUIRY =
   'שלום, אשמח לקבל פרטים על מתחם האירוח ״כאייל תערוג״ בהר חומה.';

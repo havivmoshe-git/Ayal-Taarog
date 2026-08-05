@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { galleryUrl, type GalleryImage } from '../data/gallery';
+import type { GalleryImage } from '../content/schema';
+import { imageSrc } from '../lib/media';
 import { ChevronIcon, CloseIcon } from './Icons';
 
 type Props = {
@@ -83,7 +84,7 @@ export default function Lightbox({ images, index, onClose, onNavigate }: Props) 
       <div className="relative flex flex-1 items-center justify-center overflow-hidden px-2 pb-4">
         <img
           key={current.slug}
-          src={galleryUrl(current.slug, 'lg')}
+          src={imageSrc(current, 'lg')}
           alt={current.alt}
           onClick={(e) => e.stopPropagation()}
           className="fade-in max-h-full max-w-full rounded-lg object-contain shadow-2xl"

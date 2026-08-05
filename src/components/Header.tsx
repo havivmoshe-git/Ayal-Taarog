@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react';
-import { hero, nav } from '../data/content';
+import { useEffect, useMemo, useState } from 'react';
+import { useContent, useSection } from '../content/ContentContext';
 import { GENERAL_ENQUIRY, whatsappLink } from '../lib/whatsapp';
+import { useContact } from '../content/ContentContext';
 import { useScrollSpy } from '../hooks/useScrollSpy';
 import { CloseIcon, WhatsAppIcon } from './Icons';
 
-const SECTION_IDS = nav.map((n) => n.href.slice(1));
-
 export default function Header() {
+  const { nav } = useContent();
+  const contact = useContact();
+  const hero = useSection('hero')?.data;
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { activeId, progress } = useScrollSpy(SECTION_IDS);
+  const sectionIds = useMemo(() => nav.map((n) => n.href.slice(1)), [nav]);
+  const { activeId, progress } = useScrollSpy(sectionIds);
 
   const activeLabel = nav.find((n) => n.href === `#${activeId}`)?.label;
 
@@ -43,7 +46,7 @@ export default function Header() {
       >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 sm:px-6">
           <a href="#top" className="flex min-w-0 items-baseline gap-2 text-cream-50">
-            <span className="font-display text-lg font-black sm:text-xl">{hero.brand}</span>
+            <span className="font-display text-lg font-black sm:text-xl">{hero?.brand}</span>
             {/* On a phone the header doubles as a "you are here" marker. */}
             <span
               className={`truncate text-xs font-semibold text-gold-300 transition-opacity duration-300 ${
@@ -52,7 +55,7 @@ export default function Header() {
             >
               {activeLabel && `· ${activeLabel}`}
             </span>
-            <span className="hidden text-xs font-medium text-gold-300 lg:inline">{hero.kicker}</span>
+            <span className="hidden text-xs font-medium text-gold-300 lg:inline">{hero?.kicker}</span>
           </a>
 
           <nav className="hidden items-center gap-6 lg:flex">
@@ -79,7 +82,7 @@ export default function Header() {
 
           <div className="flex items-center gap-2">
             <a
-              href={whatsappLink(GENERAL_ENQUIRY)}
+              href={whatsappLink(contact.whatsappNumber, GENERAL_ENQUIRY)}
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-gold hidden !min-h-11 !px-5 !text-sm sm:inline-flex"
@@ -113,7 +116,7 @@ export default function Header() {
       {menuOpen && (
         <div className="fixed inset-0 z-50 flex flex-col bg-navy-950 lg:hidden">
           <div className="flex items-center justify-between px-5 py-4">
-            <span className="font-display text-lg font-black text-cream-50">{hero.brand}</span>
+            <span className="font-display text-lg font-black text-cream-50">{hero?.brand}</span>
             <button
               type="button"
               onClick={() => setMenuOpen(false)}
@@ -149,7 +152,7 @@ export default function Header() {
               );
             })}
             <a href="#contact" onClick={() => setMenuOpen(false)} className="btn btn-gold mt-7 w-full">
-              {hero.ctaPrimary}
+              {hero?.ctaPrimary}
             </a>
           </nav>
         </div>

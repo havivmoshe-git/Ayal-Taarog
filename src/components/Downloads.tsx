@@ -1,22 +1,23 @@
-import { downloads, downloadsSection } from '../data/content';
+import type { DownloadsData } from '../content/schema';
+import { assetUrl } from '../lib/media';
 import Section from './Section';
 import Reveal from './Reveal';
 import { DownloadIcon } from './Icons';
 
-export default function Downloads() {
+export default function Downloads({ data, id }: { data: DownloadsData; id: string }) {
   return (
     <Section
-      id="downloads"
-      eyebrow={downloadsSection.eyebrow}
-      title={downloadsSection.title}
-      subtitle={downloadsSection.subtitle}
+      id={id}
+      eyebrow={data.eyebrow}
+      title={data.title}
+      subtitle={data.subtitle}
       className="bg-cream-100"
     >
       {/* Two cards side by side even on a phone — they are small, and stacking
           them costs half a screen for no gain in legibility. */}
       <div className="mx-auto grid max-w-3xl grid-cols-2 gap-3 sm:gap-5">
-        {downloads.map((item, i) => {
-          const href = `${import.meta.env.BASE_URL}${item.file}`;
+        {data.items.map((item, i) => {
+          const href = assetUrl(item.file);
           const isPdf = item.kind === 'pdf';
           return (
             <Reveal key={item.slug} from="scale" delay={i * 80} className="h-full">
@@ -33,7 +34,7 @@ export default function Downloads() {
                       <span className="font-display text-3xl font-black text-gold-400 sm:text-4xl">
                         PDF
                       </span>
-                      <span className="text-xs text-cream-200/70">4 עמודים</span>
+                      {item.badge && <span className="text-xs text-cream-200/70">{item.badge}</span>}
                     </div>
                   ) : (
                     <img

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { galleryUrl } from '../data/gallery';
+import type { ImageBreakData } from '../content/schema';
+import { mediaUrl } from '../lib/media';
 
 /**
  * Full-bleed image band with one line of text, dropped between content
@@ -11,14 +12,8 @@ import { galleryUrl } from '../data/gallery';
  * enough to notice as an effect.
  */
 
-type Props = {
-  slug: string;
-  alt: string;
-  line: string;
-  attribution?: string;
-};
-
-export default function ImageBreak({ slug, alt, line, attribution }: Props) {
+export default function ImageBreak({ data, id }: { data: ImageBreakData; id: string }) {
+  const { alt, line, attribution } = data;
   const ref = useRef<HTMLDivElement>(null);
   const [shift, setShift] = useState(0);
 
@@ -48,10 +43,10 @@ export default function ImageBreak({ slug, alt, line, attribution }: Props) {
   }, []);
 
   return (
-    <div ref={ref} className="relative h-64 overflow-hidden bg-navy-950 sm:h-80 lg:h-96">
+    <div id={id} ref={ref} className="relative h-64 overflow-hidden bg-navy-950 sm:h-80 lg:h-96">
       <img
-        src={galleryUrl(slug, 'lg')}
-        srcSet={`${galleryUrl(slug, 'sm')} 600w, ${galleryUrl(slug, 'lg')} 1600w`}
+        src={data.imageUrl ?? mediaUrl(data.image, 'lg')}
+        srcSet={`${data.imageUrl ?? mediaUrl(data.image, 'sm')} 600w, ${data.imageUrl ?? mediaUrl(data.image, 'lg')} 1600w`}
         sizes="100vw"
         alt={alt}
         loading="lazy"

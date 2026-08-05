@@ -1,27 +1,27 @@
 import { useState } from 'react';
-import { contact } from '../data/content';
-import { culinaryIncluded, kosher, meals, menuSection } from '../data/menu';
+import type { MenuData } from '../content/schema';
+import { useContact } from '../content/ContentContext';
+import { assetUrl } from '../lib/media';
 import Section from './Section';
 import Reveal from './Reveal';
 import { DownloadIcon } from './Icons';
 
-const PDF_PATH = 'docs/menu-shabbat.pdf';
-
-export default function Menu() {
-  const [active, setActive] = useState(meals[0].id);
-  const meal = meals.find((m) => m.id === active) ?? meals[0];
+export default function Menu({ data, id }: { data: MenuData; id: string }) {
+  const contact = useContact();
+  const [active, setActive] = useState(data.meals[0].id);
+  const meal = data.meals.find((m) => m.id === active) ?? data.meals[0];
 
   return (
     <Section
-      id="menu"
-      eyebrow={menuSection.eyebrow}
-      title={menuSection.title}
-      subtitle={menuSection.subtitle}
+      id={id}
+      eyebrow={data.eyebrow}
+      title={data.title}
+      subtitle={data.subtitle}
       className="bg-cream-50"
     >
       {/* Kashrut is the first thing this audience checks — it goes above the food. */}
       <Reveal from="scale" className="mb-8 flex flex-wrap justify-center gap-2 sm:gap-3">
-        {kosher.map((k) => (
+        {data.kosher.map((k) => (
           <div
             key={k.label}
             className="rounded-full border border-gold-500/40 bg-white px-3.5 py-2 text-center sm:px-5 sm:py-2.5"
@@ -43,7 +43,7 @@ export default function Menu() {
         role="tablist"
         aria-label="בחירת סעודה"
       >
-        {meals.map((m) => {
+        {data.meals.map((m) => {
           const isActive = m.id === active;
           return (
             <button
@@ -97,18 +97,18 @@ export default function Menu() {
         </div>
 
         <p className="mt-8 text-center text-xs leading-relaxed text-stone-500">
-          {menuSection.disclaimer}
+          {data.disclaimer}
         </p>
 
         <div className="mt-8 text-center">
           <a
-            href={`${import.meta.env.BASE_URL}${PDF_PATH}`}
+            href={assetUrl(data.downloadFile)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn border-2 border-navy-950 text-navy-950 hover:bg-navy-950 hover:text-cream-50"
           >
             <DownloadIcon className="size-5" />
-            {menuSection.downloadCta}
+            {data.downloadCta}
           </a>
         </div>
       </div>
@@ -116,10 +116,10 @@ export default function Menu() {
       {/* What the culinary package covers, straight from the venue's flyer. */}
       <Reveal className="mt-14 rounded-2xl bg-navy-950 p-7 sm:p-9">
         <h3 className="mb-6 text-center font-display text-xl font-bold !text-cream-50 sm:text-2xl">
-          מה כולל האירוח הקולינרי
+          {data.culinaryTitle}
         </h3>
         <ul className="mx-auto grid max-w-3xl gap-x-6 gap-y-2.5 sm:grid-cols-2">
-          {culinaryIncluded.map((item) => (
+          {data.culinaryIncluded.map((item) => (
             <li key={item} className="flex items-start gap-2 text-[13px] leading-snug text-cream-200 sm:text-base">
               <svg
                 viewBox="0 0 24 24"

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { contact, hero } from '../data/content';
+import { useContact, useSection } from '../content/ContentContext';
 import { GENERAL_ENQUIRY, whatsappLink } from '../lib/whatsapp';
 import { PhoneIcon, WhatsAppIcon } from './Icons';
 
@@ -11,6 +11,8 @@ import { PhoneIcon, WhatsAppIcon } from './Icons';
  * the whole way down. Desktop keeps the header CTA and needs none of this.
  */
 export default function MobileBar() {
+  const contact = useContact();
+  const hero = useSection('hero')?.data;
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export default function MobileBar() {
         </a>
 
         <a
-          href={whatsappLink(GENERAL_ENQUIRY)}
+          href={whatsappLink(contact.whatsappNumber, GENERAL_ENQUIRY)}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="שיחה בוואטסאפ"
@@ -51,7 +53,7 @@ export default function MobileBar() {
           href="#contact"
           className="flex min-h-12 flex-1 items-center justify-center rounded-xl bg-gold-500 font-display text-base font-bold text-navy-950 active:scale-[0.98]"
         >
-          {hero.ctaShort}
+          {hero?.ctaShort}
         </a>
       </div>
     </div>

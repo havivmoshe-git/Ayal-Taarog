@@ -1,5 +1,5 @@
 import type { ComponentType, SVGProps } from 'react';
-import type { IncludedItem } from '../data/content';
+import type { IncludedIcon } from '../content/schema';
 
 /* Hand-rolled inline icons — a whole icon library would be far more bytes than
    the eight glyphs this page actually uses. All share a 24px stroke grid. */
@@ -165,7 +165,7 @@ export function ChevronIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-export const includedIcons: Record<IncludedItem['icon'], ComponentType<SVGProps<SVGSVGElement>>> = {
+export const includedIcons: Record<IncludedIcon, ComponentType<SVGProps<SVGSVGElement>>> = {
   bed: BedIcon,
   chef: ChefIcon,
   hall: HallIcon,

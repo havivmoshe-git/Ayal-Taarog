@@ -1,20 +1,20 @@
-import { included } from '../data/content';
+import type { IncludedData } from '../content/schema';
 import Section from './Section';
 import Reveal from './Reveal';
 import Carousel from './Carousel';
 import { includedIcons } from './Icons';
 
-export default function Included() {
+export default function Included({ data, id }: { data: IncludedData; id: string }) {
   return (
     <Section
-      id="included"
-      eyebrow="הכול במקום אחד"
-      title="מה כולל האירוח"
-      subtitle="לינה, סעודות, תפילות ושיעורים — בלי להזיז את האורחים בין מקומות, ובלי להתעסק בתיאומים."
+      id={id}
+      eyebrow={data.eyebrow}
+      title={data.title}
+      subtitle={data.subtitle}
       className="bg-cream-50"
     >
-      <Carousel ariaLabel="מה כולל האירוח" gridClass="sm:grid-cols-2 lg:grid-cols-4">
-        {included.map((item, i) => {
+      <Carousel ariaLabel={data.title} gridClass="sm:grid-cols-2 lg:grid-cols-4">
+        {data.items.map((item, i) => {
           const Icon = includedIcons[item.icon];
           return (
             <Reveal

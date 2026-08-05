@@ -1,13 +1,13 @@
-import { faq } from '../data/content';
+import type { FaqData } from '../content/schema';
 import Section from './Section';
 import Reveal from './Reveal';
 import { ChevronIcon } from './Icons';
 
-export default function Faq() {
+export default function Faq({ data, id }: { data: FaqData; id: string }) {
   return (
-    <Section id="faq" eyebrow="לפני שפונים" title="שאלות נפוצות" className="bg-cream-100">
+    <Section id={id} eyebrow={data.eyebrow} title={data.title} className="bg-cream-100">
       <div className="mx-auto max-w-3xl space-y-3">
-        {faq.map((item, i) => (
+        {data.items.map((item, i) => (
           <Reveal
             as="details"
             key={item.q}

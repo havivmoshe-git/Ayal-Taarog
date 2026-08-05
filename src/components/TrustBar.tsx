@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { trustBar } from '../data/content';
+import type { TrustBarData } from '../content/schema';
 
 /** Counts up to `value` once the bar scrolls into view. Non-numeric values
  *  (like the kashrut label) are rendered as-is. */
@@ -53,11 +53,11 @@ function Stat({ value }: { value: string }) {
   );
 }
 
-export default function TrustBar() {
+export default function TrustBar({ data, id }: { data: TrustBarData; id: string }) {
   return (
-    <section className="relative z-20 bg-navy-900 px-5 py-9 sm:px-6 md:py-12">
+    <section id={id} className="relative z-20 bg-navy-900 px-5 py-9 sm:px-6 md:py-12">
       <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-x-4 gap-y-7 md:grid-cols-4">
-        {trustBar.map((item) => (
+        {data.items.map((item) => (
           <div
             key={item.label}
             className="border-gold-500/25 text-center md:border-l md:last:border-l-0"

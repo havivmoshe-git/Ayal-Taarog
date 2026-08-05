@@ -1,5 +1,6 @@
-import { contact, hero } from '../data/content';
-import { galleryUrl } from '../data/gallery';
+import { useContact } from '../content/ContentContext';
+import type { HeroData } from '../content/schema';
+import { mediaUrl } from '../lib/media';
 import { GENERAL_ENQUIRY, whatsappLink } from '../lib/whatsapp';
 import { ArrowDownIcon, PinIcon, WhatsAppIcon } from './Icons';
 
@@ -7,25 +8,25 @@ import { ArrowDownIcon, PinIcon, WhatsAppIcon } from './Icons';
    on a portrait phone keeps only the centre ~30% of its width — which happens to
    be the drinks on the near table. On narrow screens we swap in a close, shallow
    depth-of-field table shot that was framed vertically to begin with. */
-const HERO_WIDE = 'hall-shabbat-meal';
-const HERO_PORTRAIT = 'hall-place-setting';
 
-export default function Hero() {
+export default function Hero({ data, id }: { data: HeroData; id: string }) {
+  const contact = useContact();
+
   return (
-    <section id="top" className="relative flex min-h-[100svh] items-end overflow-hidden bg-navy-950">
+    <section id={id} className="relative flex min-h-[100svh] items-end overflow-hidden bg-navy-950">
       {/* The hero image is the one asset worth loading eagerly — it is the
           largest contentful paint and the first impression. */}
       <picture>
         <source
           media="(max-width: 640px)"
-          srcSet={`${galleryUrl(HERO_PORTRAIT, 'sm')} 600w, ${galleryUrl(HERO_PORTRAIT, 'lg')} 1600w`}
+          srcSet={`${mediaUrl(data.imagePortrait, 'sm')} 600w, ${mediaUrl(data.imagePortrait, 'lg')} 1600w`}
           sizes="100vw"
         />
         <img
-          src={galleryUrl(HERO_WIDE, 'lg')}
-          srcSet={`${galleryUrl(HERO_WIDE, 'sm')} 600w, ${galleryUrl(HERO_WIDE, 'lg')} 1600w`}
+          src={mediaUrl(data.imageWide, 'lg')}
+          srcSet={`${mediaUrl(data.imageWide, 'sm')} 600w, ${mediaUrl(data.imageWide, 'lg')} 1600w`}
           sizes="100vw"
-          alt="אולם האירוח של מתחם כאייל תערוג ערוך לסעודת שבת"
+          alt={`${data.brand} — ${data.titleAccent}`}
           fetchPriority="high"
           className="absolute inset-0 size-full object-cover"
         />
@@ -40,28 +41,28 @@ export default function Hero() {
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-16 pt-28 sm:px-6 sm:pb-20">
         <p className="hero-in mb-4 font-display text-sm font-bold tracking-[0.3em] text-gold-300">
-          {hero.eyebrow}
+          {data.eyebrow}
         </p>
 
         <div className="hero-in" style={{ animationDelay: '80ms' }}>
-          <p className="font-display text-base font-semibold text-cream-200 sm:text-lg">{hero.kicker}</p>
+          <p className="font-display text-base font-semibold text-cream-200 sm:text-lg">{data.kicker}</p>
           <h1 className="mt-1 font-display text-5xl font-black !text-cream-50 sm:text-6xl md:text-7xl lg:text-8xl">
-            {hero.brand}
+            {data.brand}
           </h1>
         </div>
 
         <div className="hero-in mt-6 max-w-2xl" style={{ animationDelay: '180ms' }}>
           <div className="rule-gold mb-6 h-px w-28" />
           <h2 className="font-display text-2xl font-bold !text-gold-300 sm:text-3xl md:text-4xl">
-            {hero.title}
+            {data.title}
           </h2>
           <p className="mt-2 font-display text-xl font-semibold text-cream-50 sm:text-2xl">
-            {hero.titleAccent}
+            {data.titleAccent}
           </p>
-          <p className="mt-4 text-base text-cream-200 sm:text-lg">{hero.subtitle}</p>
+          <p className="mt-4 text-base text-cream-200 sm:text-lg">{data.subtitle}</p>
           <p className="mt-2 flex items-center gap-1.5 text-sm text-cream-200/80 sm:text-base">
             <PinIcon className="size-4 shrink-0 text-gold-400" />
-            {hero.location}
+            {data.location}
           </p>
         </div>
 
@@ -70,26 +71,26 @@ export default function Hero() {
           style={{ animationDelay: '280ms' }}
         >
           <a href="#contact" className="btn btn-gold w-full sm:w-auto">
-            {hero.ctaPrimary}
+            {data.ctaPrimary}
           </a>
           <a
-            href={whatsappLink(GENERAL_ENQUIRY)}
+            href={whatsappLink(contact.whatsappNumber, GENERAL_ENQUIRY)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn btn-outline w-full sm:w-auto"
           >
             <WhatsAppIcon className="size-5" />
-            {hero.ctaSecondary}
+            {data.ctaSecondary}
           </a>
         </div>
 
         <a
-          href="#included"
+          href="#contact"
           className="hero-in mt-12 hidden items-center gap-2 text-xs font-semibold tracking-widest text-cream-200/70 sm:inline-flex"
           style={{ animationDelay: '450ms' }}
         >
           <ArrowDownIcon className="size-4 animate-bounce" />
-          {hero.scrollHint}
+          {data.scrollHint}
         </a>
       </div>
 

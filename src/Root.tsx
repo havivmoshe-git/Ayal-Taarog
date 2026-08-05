@@ -1,6 +1,19 @@
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import App from './App';
 import { ContentProvider } from './content/ContentContext';
+import type { SiteContent } from './content/schema';
+
+const PREVIEW_KEY = 'ayal:preview';
+
+/** The draft the panel handed over, if this tab was opened as a preview. */
+function readPreview(): SiteContent | null {
+  try {
+    const raw = sessionStorage.getItem(PREVIEW_KEY);
+    return raw ? (JSON.parse(raw) as SiteContent) : null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Hash routing, hand-rolled.
@@ -41,8 +54,15 @@ export default function Root() {
     );
   }
 
+  const draft = useMemo(() => (route === 'preview' ? readPreview() : null), [route]);
+
   return (
-    <ContentProvider>
+    <ContentProvider override={draft}>
+      {draft && (
+        <div className="fixed inset-x-0 top-0 z-50 bg-gold-500 py-1 text-center font-display text-xs font-bold text-navy-950">
+          תצוגה מקדימה — כך ייראה האתר אחרי פרסום
+        </div>
+      )}
       <App />
     </ContentProvider>
   );

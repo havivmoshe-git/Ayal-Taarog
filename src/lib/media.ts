@@ -3,13 +3,23 @@ import type { GalleryImage } from '../content/schema';
 /**
  * Resolves an image reference to a URL.
  *
- * Two kinds coexist: photographs shipped with the build, referenced by slug and
- * served from `public/gallery/`, and pictures uploaded through the admin panel,
- * which carry absolute URLs. Callers should not have to care which is which.
+ * Three kinds coexist, and callers should not have to care which is which:
+ *
+ * - A slug, for photographs shipped with the build and served from
+ *   `public/gallery/` — `hall-shabbat-meal` becomes `…/hall-shabbat-meal-sm.webp`.
+ * - An upload base, for pictures added through the panel. The panel stores both
+ *   sizes side by side and keeps the shared prefix, so a `-sm`/`-lg` pair
+ *   resolves exactly like a bundled slug does. Without this an uploaded photo
+ *   would serve its 1600px copy to every phone, and the small file the panel
+ *   had already produced and paid to upload would never be used.
+ * - A complete URL ending in an image extension, for a link pasted by hand.
+ *   Used as-is; there is no second size to reach for.
  */
 export function mediaUrl(ref: string | undefined, size: 'sm' | 'lg'): string {
   if (!ref) return '';
-  if (/^https?:\/\//.test(ref)) return ref;
+  if (/^https?:\/\//.test(ref)) {
+    return /\.(webp|avif|jpe?g|png|gif|svg)$/i.test(ref) ? ref : `${ref}-${size}.webp`;
+  }
   return `${import.meta.env.BASE_URL}gallery/${ref}-${size}.webp`;
 }
 

@@ -34,10 +34,19 @@ export function ContentProvider({ children, override, previewMode }: ProviderPro
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if (e.origin !== window.location.origin) return;
-      const msg = e.data as { type?: string; content?: SiteContent };
+      const msg = e.data as { type?: string; content?: SiteContent; focus?: string };
       if (msg?.type === 'ayal:preview' && msg.content) {
         setContent(msg.content);
         setIsRemote(true);
+        // Scroll to whatever is being edited. On a phone the preview is a
+        // separate tab rather than a second pane, so without this it opens at
+        // the top of the page and an edit further down looks like it did
+        // nothing. Deferred a frame so the section exists to scroll to.
+        if (msg.focus) {
+          requestAnimationFrame(() => {
+            document.getElementById(msg.focus as string)?.scrollIntoView({ block: 'start' });
+          });
+        }
       }
     };
     window.addEventListener('message', onMessage);

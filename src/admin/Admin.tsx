@@ -126,10 +126,10 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
   }, []);
 
   // Push every change into the preview frame, so it tracks typing live.
-  const pushToPreview = useCallback((next: SiteContent) => {
+  const pushToPreview = useCallback((next: SiteContent, focus?: string) => {
     if (!frameReady.current) return;
     frame.current?.contentWindow?.postMessage(
-      { type: 'ayal:preview', content: next },
+      { type: 'ayal:preview', content: next, focus },
       window.location.origin,
     );
   }, []);
@@ -189,6 +189,13 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
     },
     [update],
   );
+
+  // Point the preview at whatever is open in the editor — when a section is
+  // picked, and when a phone switches to the preview tab. Not on every
+  // keystroke: that would yank the page away from someone scrolling it.
+  useEffect(() => {
+    if (editing && latest.current) pushToPreview(latest.current, editing);
+  }, [editing, pane, pushToPreview]);
 
   const sectionCount = content?.sections.length ?? 0;
   const reorder = useReorder(sectionCount, moveSection);

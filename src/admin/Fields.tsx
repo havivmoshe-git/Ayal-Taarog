@@ -133,6 +133,9 @@ function ImageField({
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Tracked by URL rather than as a flag, so picking a new picture clears the
+  // warning without an effect to reset it.
+  const [brokenSrc, setBrokenSrc] = useState<string | null>(null);
 
   const pick = async (file: File) => {
     setBusy(true);
@@ -141,11 +144,13 @@ function ImageField({
       // Shrink in the browser before upload: a 6MB phone photo becomes a
       // couple of hundred KB, and the phone doing it costs nothing.
       const { large, small } = await resizeForUpload(file);
-      const stamp = Date.now();
-      const base = `uploads/${stamp}`;
-      const lg = await store.uploadImage(`${base}-lg.webp`, large);
-      await store.uploadImage(`${base}-sm.webp`, small);
-      onChange(lg);
+      const path = `uploads/${Date.now()}`;
+      const lgUrl = await store.uploadImage(`${path}-lg.webp`, large);
+      await store.uploadImage(`${path}-sm.webp`, small);
+      // Store the shared prefix, not one of the two files: `mediaUrl` appends
+      // `-sm`/`-lg`, so the site can pick the right size per screen the same
+      // way it does for the photographs bundled with the build.
+      onChange(lgUrl.replace(/-lg\.webp$/, ''));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'ההעלאה נכשלה');
     } finally {
@@ -153,18 +158,30 @@ function ImageField({
     }
   };
 
-  const preview = value ? (/^https?:\/\//.test(value) ? value : mediaUrl(value, 'sm')) : '';
+  const preview = mediaUrl(value, 'sm');
+  const broken = Boolean(preview) && brokenSrc === preview;
 
   return (
     <div>
       <label className={label}>{text}</label>
       <div className="flex items-center gap-3">
         {preview && (
-          <img
-            src={preview}
-            alt=""
-            className="size-16 shrink-0 rounded-lg border border-cream-200 object-cover"
-          />
+          // A thumbnail that fails silently is how a broken picture reaches the
+          // live site unnoticed, so say so here instead.
+          <div className="size-16 shrink-0 overflow-hidden rounded-lg border border-cream-200 bg-cream-100">
+            {broken ? (
+              <span className="flex size-full items-center justify-center p-1 text-center text-[10px] leading-tight text-red-600">
+                לא נטענת
+              </span>
+            ) : (
+              <img
+                src={preview}
+                alt=""
+                className="size-full object-cover"
+                onError={() => setBrokenSrc(preview)}
+              />
+            )}
+          </div>
         )}
         <div className="min-w-0 flex-1">
           <input

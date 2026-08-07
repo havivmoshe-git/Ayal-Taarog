@@ -13,6 +13,46 @@ import { PUBLISHED_OBJECT, STORAGE_BUCKET, getSupabase, isConfigured } from '../
 
 export type Session = { email: string };
 
+export type VersionKind = 'autosave' | 'publish' | 'restore';
+
+export type Version = {
+  id: number;
+  kind: VersionKind;
+  note: string | null;
+  createdAt: string;
+};
+
+export type LeadIntent = {
+  id: number;
+  at: string;
+  sent: boolean;
+  filled: number;
+  name: string | null;
+  phone: string | null;
+  dateGreg: string | null;
+  dateHeb: string | null;
+  guests: string | null;
+  kind: string | null;
+  notes: string | null;
+  device: string | null;
+};
+
+export type Insights = {
+  days: number;
+  visits: number;
+  visitors: number;
+  sessions: number;
+  returning: number;
+  by_hour: Record<string, number>;
+  by_day: { day: string; visits: number; visitors: number }[];
+  by_device: Record<string, number>;
+  referrers: { source: string; visits: number }[];
+  sections: { label: string; visitors: number }[];
+  scroll_depth: number;
+  clicks: Record<string, number>;
+  form: { started: number; sent: number; abandoned: number };
+};
+
 export interface ContentStore {
   /** Whether this store keeps content anywhere other people can see. */
   readonly isRemote: boolean;
@@ -22,10 +62,23 @@ export interface ContentStore {
   changePassword(next: string): Promise<void>;
   currentSession(): Promise<Session | null>;
   loadDraft(): Promise<SiteContent>;
+  /** The document currently live, for diffing the draft against. */
+  loadPublished(): Promise<SiteContent | null>;
   saveDraft(content: SiteContent): Promise<void>;
-  publish(content: SiteContent): Promise<void>;
+  /** Publishing always snapshots, so history cannot be forgotten at the call site. */
+  publish(content: SiteContent, note?: string): Promise<void>;
   /** Returns the public URL of the stored file. */
   uploadImage(path: string, blob: Blob): Promise<string>;
+
+  /* History */
+  listVersions(limit?: number): Promise<Version[]>;
+  loadVersion(id: number): Promise<SiteContent>;
+  saveVersion(content: SiteContent, kind: VersionKind, note?: string): Promise<void>;
+
+  /* Insights */
+  insights(days: number): Promise<Insights | null>;
+  leads(limit?: number): Promise<LeadIntent[]>;
+  deleteLead(id: number): Promise<void>;
 }
 
 /* ── Local store ──────────────────────────────────────────────────────── */
@@ -33,6 +86,7 @@ export interface ContentStore {
 const LOCAL_DRAFT = 'ayal:draft';
 const LOCAL_PUBLISHED = 'ayal:published';
 const LOCAL_SESSION = 'ayal:session';
+const LOCAL_VERSIONS = 'ayal:versions';
 
 /**
  * Stand-in used until Supabase is configured. Everything lives in this
@@ -75,16 +129,61 @@ class LocalStore implements ContentStore {
     localStorage.setItem(LOCAL_DRAFT, JSON.stringify(content));
   }
 
-  async publish(content: SiteContent) {
+  async publish(content: SiteContent, note?: string) {
     const stamped = { ...content, updatedAt: new Date().toISOString() };
     localStorage.setItem(LOCAL_PUBLISHED, JSON.stringify(stamped));
     localStorage.setItem(LOCAL_DRAFT, JSON.stringify(stamped));
+    await this.saveVersion(stamped, 'publish', note);
+  }
+
+  async loadPublished(): Promise<SiteContent | null> {
+    const raw = localStorage.getItem(LOCAL_PUBLISHED);
+    return raw ? (JSON.parse(raw) as SiteContent) : null;
   }
 
   async uploadImage(_path: string, blob: Blob): Promise<string> {
     // Object URLs survive only this page load; enough to see the layout work,
     // and honestly signalled by the "not connected" banner in the panel.
     return URL.createObjectURL(blob);
+  }
+
+  async listVersions(limit = 50): Promise<Version[]> {
+    const raw = localStorage.getItem(LOCAL_VERSIONS);
+    const all = raw ? (JSON.parse(raw) as (Version & { content: SiteContent })[]) : [];
+    return all.slice(0, limit).map(({ content: _content, ...v }) => v);
+  }
+
+  async loadVersion(id: number): Promise<SiteContent> {
+    const raw = localStorage.getItem(LOCAL_VERSIONS);
+    const all = raw ? (JSON.parse(raw) as (Version & { content: SiteContent })[]) : [];
+    const found = all.find((v) => v.id === id);
+    if (!found) throw new Error('הגרסה לא נמצאה');
+    return found.content;
+  }
+
+  async saveVersion(content: SiteContent, kind: VersionKind, note?: string) {
+    const raw = localStorage.getItem(LOCAL_VERSIONS);
+    const all = raw ? (JSON.parse(raw) as (Version & { content: SiteContent })[]) : [];
+    all.unshift({
+      id: Date.now(),
+      kind,
+      note: note ?? null,
+      createdAt: new Date().toISOString(),
+      content,
+    });
+    localStorage.setItem(LOCAL_VERSIONS, JSON.stringify(all.slice(0, 50)));
+  }
+
+  async insights(): Promise<Insights | null> {
+    return null;
+  }
+
+  async leads(): Promise<LeadIntent[]> {
+    return [];
+  }
+
+  async deleteLead() {
+    // Nothing is recorded without a server.
   }
 }
 
@@ -144,7 +243,18 @@ class SupabaseStore implements ContentStore {
     if (error) throw new Error(error.message);
   }
 
-  async publish(content: SiteContent) {
+  async loadPublished(): Promise<SiteContent | null> {
+    const sb = await getSupabase();
+    const { data, error } = await sb
+      .from('site_content')
+      .select('published')
+      .eq('id', 1)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return (data?.published as SiteContent | null) ?? null;
+  }
+
+  async publish(content: SiteContent, note?: string) {
     const sb = await getSupabase();
     const stamped: SiteContent = { ...content, updatedAt: new Date().toISOString() };
 
@@ -166,6 +276,11 @@ class SupabaseStore implements ContentStore {
         contentType: 'application/json',
       });
     if (uploadError) throw new Error(uploadError.message);
+
+    // Last, and deliberately not awaited into the failure path: the site is
+    // already updated, and a history row that failed to write is not a reason
+    // to tell the owner the publish failed.
+    await this.saveVersion(stamped, 'publish', note).catch(() => {});
   }
 
   async uploadImage(path: string, blob: Blob): Promise<string> {
@@ -178,6 +293,84 @@ class SupabaseStore implements ContentStore {
     if (error) throw new Error(error.message);
     const { data } = sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
     return data.publicUrl;
+  }
+
+  /* ── History ──────────────────────────────────────────────────────── */
+
+  async listVersions(limit = 50): Promise<Version[]> {
+    const sb = await getSupabase();
+    // Deliberately without `content`: the list is a list. Fifty full documents
+    // is megabytes, and the panel needs one of them only when asked.
+    const { data, error } = await sb
+      .from('content_versions')
+      .select('id, kind, note, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((row) => ({
+      id: row.id as number,
+      kind: row.kind as VersionKind,
+      note: (row.note as string | null) ?? null,
+      createdAt: row.created_at as string,
+    }));
+  }
+
+  async loadVersion(id: number): Promise<SiteContent> {
+    const sb = await getSupabase();
+    const { data, error } = await sb
+      .from('content_versions')
+      .select('content')
+      .eq('id', id)
+      .single();
+    if (error) throw new Error(error.message);
+    return data.content as SiteContent;
+  }
+
+  async saveVersion(content: SiteContent, kind: VersionKind, note?: string) {
+    const sb = await getSupabase();
+    const { error } = await sb
+      .from('content_versions')
+      .insert({ content, kind, note: note ?? null });
+    if (error) throw new Error(error.message);
+  }
+
+  /* ── Insights ─────────────────────────────────────────────────────── */
+
+  async insights(days: number): Promise<Insights | null> {
+    const sb = await getSupabase();
+    const { data, error } = await sb.rpc('site_insights', { days });
+    if (error) throw new Error(error.message);
+    return (data as Insights) ?? null;
+  }
+
+  async leads(limit = 100): Promise<LeadIntent[]> {
+    const sb = await getSupabase();
+    const { data, error } = await sb
+      .from('lead_intents')
+      .select('*')
+      .order('at', { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r) => ({
+      id: r.id as number,
+      at: r.at as string,
+      sent: Boolean(r.sent),
+      filled: (r.filled as number) ?? 0,
+      name: (r.name as string | null) ?? null,
+      phone: (r.phone as string | null) ?? null,
+      dateGreg: (r.date_greg as string | null) ?? null,
+      dateHeb: (r.date_heb as string | null) ?? null,
+      guests: (r.guests as string | null) ?? null,
+      kind: (r.kind as string | null) ?? null,
+      notes: (r.notes as string | null) ?? null,
+      device: (r.device as string | null) ?? null,
+    }));
+  }
+
+  async deleteLead(id: number) {
+    const sb = await getSupabase();
+    const { error } = await sb.from('lead_intents').delete().eq('id', id);
+    if (error) throw new Error(error.message);
   }
 }
 

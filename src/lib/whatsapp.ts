@@ -1,5 +1,6 @@
 export type Inquiry = {
   name: string;
+  phone: string;
   dateGregorian: string;
   dateHebrew: string;
   guests: string;
@@ -25,6 +26,7 @@ export function buildInquiryMessage(inquiry: Inquiry): string {
   const lines: string[] = ['שלום, הגעתי דרך האתר ואשמח לקבל הצעה למתחם האירוח ״כאייל תערוג״.', ''];
 
   if (inquiry.name.trim()) lines.push(`שם: ${inquiry.name.trim()}`);
+  if (inquiry.phone.trim()) lines.push(`טלפון: ${inquiry.phone.trim()}`);
 
   const dates = [inquiry.dateGregorian ? formatDate(inquiry.dateGregorian) : '', inquiry.dateHebrew.trim()]
     .filter(Boolean)

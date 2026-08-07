@@ -2,9 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Section, SectionType, SiteContent } from '../content/schema';
 import { REPEATABLE, SECTION_LABELS } from '../content/schema';
 import { isWithinSchedule } from '../content/load';
+import type { SectionOf } from '../content/schema';
 import { FORM_SPEC, NEW_SECTION_DATA, SITE_GROUPS } from './formSpec';
 import { FieldRenderer } from './Fields';
 import { useReorder } from './useReorder';
+import { useHistory } from './useHistory';
+import { diffContent } from './diff';
+import Review from './Review';
+import History from './History';
+import Insights from './Insights';
+import GalleryManager from './GalleryManager';
 import { isConfigured, store, type Session } from './store';
 
 export default function Admin() {
@@ -103,26 +110,45 @@ function Login({ onSignedIn }: { onSignedIn: (s: Session) => void }) {
 /* ── Workspace ────────────────────────────────────────────────────────── */
 
 type Pane = 'edit' | 'preview';
+type View = 'sections' | 'site' | 'gallery' | 'history' | 'insights' | 'review';
+
+const TABS: { view: View; label: string }[] = [
+  { view: 'sections', label: 'מקטעים' },
+  { view: 'gallery', label: 'גלריה' },
+  { view: 'site', label: 'פרטים' },
+  { view: 'insights', label: 'נתונים' },
+  { view: 'history', label: 'היסטוריה' },
+];
 
 function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => void }) {
-  const [content, setContent] = useState<SiteContent | null>(null);
+  const history = useHistory<SiteContent>();
+  const content = history.present;
+
+  const [published, setPublished] = useState<SiteContent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [view, setView] = useState<View>('sections');
   const [editing, setEditing] = useState<string | null>(null);
-  const [editingSite, setEditingSite] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
   const [settings, setSettings] = useState(false);
+  const [query, setQuery] = useState('');
   const [pane, setPane] = useState<Pane>('edit');
 
   const frame = useRef<HTMLIFrameElement>(null);
   const frameReady = useRef(false);
+  const lastSnapshot = useRef(0);
 
   useEffect(() => {
-    store
-      .loadDraft()
-      .then(setContent)
+    Promise.all([store.loadDraft(), store.loadPublished().catch(() => null)])
+      .then(([draft, live]) => {
+        history.reset(draft);
+        setPublished(live);
+      })
       .catch((e) => setLoadError(e instanceof Error ? e.message : 'טעינת התוכן נכשלה'));
+    // Runs once: `history` is stable, and re-running would discard edits.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Push every change into the preview frame, so it tracks typing live.
@@ -147,15 +173,22 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
   }, [content, pushToPreview]);
 
   // Autosave shortly after typing stops — losing edits to a closed tab is the
-  // one failure this panel must not have.
+  // one failure this panel must not have. It only ever writes the draft; the
+  // live site does not move until someone presses publish.
   useEffect(() => {
     if (!content || !dirty) return;
     const t = setTimeout(async () => {
       try {
         await store.saveDraft(content);
         setDirty(false);
-        setStatus('נשמר');
-        setTimeout(() => setStatus(null), 1500);
+        setStatus('נשמר בטיוטה');
+        setTimeout(() => setStatus(null), 1600);
+        // A periodic snapshot so a long editing session is recoverable at
+        // points in between publishes, without a row per keystroke.
+        if (Date.now() - lastSnapshot.current > 15 * 60 * 1000) {
+          lastSnapshot.current = Date.now();
+          void store.saveVersion(content, 'autosave').catch(() => {});
+        }
       } catch (e) {
         setStatus(e instanceof Error ? e.message : 'השמירה נכשלה');
       }
@@ -163,18 +196,20 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
     return () => clearTimeout(t);
   }, [content, dirty]);
 
+  /**
+   * Every edit goes through here. `group` is what undo steps are cut on:
+   * successive edits naming the same group collapse into one step, so undo
+   * moves back by a sentence rather than by a letter.
+   */
   const update = useCallback(
-    (next: SiteContent) => {
-      setContent(next);
+    (next: SiteContent, group?: string) => {
+      history.set(next, group);
       setDirty(true);
       pushToPreview(next);
     },
-    [pushToPreview],
+    [history, pushToPreview],
   );
 
-  // Drag-and-drop reports indices, not identity, and the callback outlives any
-  // one render — so read the current document from a ref rather than closing
-  // over it, and keep the state updater itself free of side effects.
   const latest = useRef<SiteContent | null>(null);
   latest.current = content;
 
@@ -190,9 +225,35 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
     [update],
   );
 
-  // Point the preview at whatever is open in the editor — when a section is
-  // picked, and when a phone switches to the preview tab. Not on every
-  // keystroke: that would yank the page away from someone scrolling it.
+  const undo = useCallback(() => {
+    const next = history.undo();
+    if (next) {
+      setDirty(true);
+      pushToPreview(next);
+    }
+  }, [history, pushToPreview]);
+
+  const redo = useCallback(() => {
+    const next = history.redo();
+    if (next) {
+      setDirty(true);
+      pushToPreview(next);
+    }
+  }, [history, pushToPreview]);
+
+  // On a laptop these are muscle memory; not having them is what makes a panel
+  // feel like a form instead of an editor.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z') return;
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [undo, redo]);
+
   useEffect(() => {
     if (editing && latest.current) pushToPreview(latest.current, editing);
   }, [editing, pane, pushToPreview]);
@@ -201,6 +262,11 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
   const reorder = useReorder(sectionCount, moveSection);
 
   const previewSrc = useMemo(() => `${window.location.pathname}#preview`, []);
+
+  const pendingCount = useMemo(
+    () => (content && published ? diffContent(published, content).length : 0),
+    [content, published],
+  );
 
   if (loadError) {
     return (
@@ -220,11 +286,14 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
 
   if (!content) return <Splash>טוען תוכן…</Splash>;
 
-  const patchSection = (id: string, patch: Partial<Section>) =>
-    update({
-      ...content,
-      sections: content.sections.map((s) => (s.id === id ? ({ ...s, ...patch } as Section) : s)),
-    });
+  const patchSection = (id: string, patch: Partial<Section>, group?: string) =>
+    update(
+      {
+        ...content,
+        sections: content.sections.map((s) => (s.id === id ? ({ ...s, ...patch } as Section) : s)),
+      },
+      group,
+    );
 
   const remove = (id: string) => {
     const s = content.sections.find((x) => x.id === id);
@@ -235,63 +304,119 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
     setEditing(null);
   };
 
-  const add = (type: SectionType) => {
+  const duplicate = (id: string) => {
+    const index = content.sections.findIndex((x) => x.id === id);
+    const original = content.sections[index];
+    if (!original) return;
+    const copy = {
+      ...structuredClone(original),
+      id: `${original.type}-${Date.now().toString(36)}`,
+      navLabel: undefined,
+    } as Section;
+    const sections = [...content.sections];
+    sections.splice(index + 1, 0, copy);
+    update({ ...content, sections });
+    setEditing(copy.id);
+  };
+
+  const add = (type: SectionType, preset?: Record<string, unknown>) => {
     const section = {
       id: `${type}-${Date.now().toString(36)}`,
       type,
       enabled: true,
-      data: structuredClone(NEW_SECTION_DATA[type] ?? {}),
+      data: { ...structuredClone(NEW_SECTION_DATA[type] ?? {}), ...(preset ?? {}) },
     } as Section;
     update({ ...content, sections: [...content.sections, section] });
     setAdding(false);
     setEditing(section.id);
+    setView('sections');
   };
 
-  const publish = async () => {
-    if (!confirm('לפרסם את השינויים? הם יופיעו באתר מיד.')) return;
+  const doPublish = async (note: string) => {
+    setBusy(true);
     setStatus('מפרסם…');
     try {
-      await store.publish(content);
+      await store.publish(content, note);
+      setPublished(structuredClone(content));
       setDirty(false);
       setStatus(isConfigured ? 'פורסם! השינויים באוויר' : 'פורסם מקומית (לא מחובר לשרת)');
+      setView('sections');
       setTimeout(() => setStatus(null), 4000);
     } catch (e) {
       setStatus(e instanceof Error ? e.message : 'הפרסום נכשל');
+    } finally {
+      setBusy(false);
     }
   };
 
   const current = content.sections.find((s) => s.id === editing);
+  const gallery = content.sections.find((s) => s.type === 'gallery') as
+    | SectionOf<'gallery'>
+    | undefined;
+
+  const visibleSections = query
+    ? content.sections.filter((s) =>
+        `${SECTION_LABELS[s.type]} ${JSON.stringify(s.data)}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+      )
+    : content.sections;
 
   return (
     <div className="h-screen overflow-hidden bg-cream-100">
-      <header className="flex h-14 items-center gap-2 border-b border-cream-200 bg-cream-50 px-3">
+      <header className="flex h-14 items-center gap-1.5 border-b border-cream-200 bg-cream-50 px-2 sm:px-3">
         <button
           type="button"
           onClick={() => setSettings(true)}
           aria-label="הגדרות"
           className="flex size-10 shrink-0 items-center justify-center rounded-lg text-navy-950 hover:bg-cream-100"
         >
-          <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={1.7} aria-hidden>
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
-          </svg>
+          <GearIcon />
         </button>
 
-        <div className="min-w-0 flex-1">
-          <p className="font-display text-sm font-bold text-navy-950">ניהול האתר</p>
-          <p className="truncate text-[11px] text-stone-500">
-            {status ?? (dirty ? 'שומר…' : 'הכול שמור')}
-          </p>
+        <div className="flex shrink-0">
+          <button
+            type="button"
+            onClick={undo}
+            disabled={!history.canUndo}
+            aria-label="ביטול פעולה"
+            title="ביטול (Ctrl+Z)"
+            className="flex size-10 items-center justify-center rounded-lg text-navy-950 hover:bg-cream-100 disabled:opacity-30"
+          >
+            <UndoIcon />
+          </button>
+          <button
+            type="button"
+            onClick={redo}
+            disabled={!history.canRedo}
+            aria-label="ביצוע מחדש"
+            title="ביצוע מחדש (Ctrl+Shift+Z)"
+            className="flex size-10 items-center justify-center rounded-lg text-navy-950 hover:bg-cream-100 disabled:opacity-30"
+          >
+            <UndoIcon flip />
+          </button>
         </div>
 
-        {/* On a phone there is room for one pane at a time. */}
+        {/* One line, not two. On a 390px phone this row already holds five
+            controls, and two stacked labels left both of them truncated —
+            which is worse than showing the one that matters. The unpublished
+            count also rides on the publish button's badge. */}
+        <p className="min-w-0 flex-1 truncate px-1 text-[11px] leading-tight text-stone-500">
+          {status ??
+            (dirty
+              ? 'שומר…'
+              : pendingCount > 0
+                ? `${pendingCount} לא פורסמו`
+                : 'תואם לאתר')}
+        </p>
+
         <div className="flex shrink-0 rounded-lg bg-cream-200 p-0.5 lg:hidden">
           {(['edit', 'preview'] as Pane[]).map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => setPane(p)}
-              className={`min-h-9 rounded-md px-3 text-xs font-bold transition-colors ${
+              className={`min-h-9 rounded-md px-2.5 text-xs font-bold transition-colors ${
                 pane === p ? 'bg-white text-navy-950 shadow-sm' : 'text-stone-600'
               }`}
             >
@@ -302,93 +427,130 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
 
         <button
           type="button"
-          onClick={publish}
-          className="min-h-10 shrink-0 rounded-lg bg-gold-500 px-4 text-sm font-bold text-navy-950 active:scale-95"
+          onClick={() => setView('review')}
+          className="relative min-h-10 shrink-0 rounded-lg bg-gold-500 px-3 text-sm font-bold text-navy-950 active:scale-95"
         >
           פרסום
+          {pendingCount > 0 && (
+            <span className="absolute -left-1 -top-1 flex size-5 items-center justify-center rounded-full bg-navy-950 text-[10px] font-bold text-cream-50 ltr-nums">
+              {pendingCount > 9 ? '9+' : pendingCount}
+            </span>
+          )}
         </button>
       </header>
 
       <div className="flex h-[calc(100vh-3.5rem)]">
-        {/* Editor */}
         <div
           className={`w-full overflow-y-auto lg:w-[440px] lg:shrink-0 lg:border-l lg:border-cream-200 ${
             pane === 'edit' ? '' : 'hidden lg:block'
           }`}
         >
+          {/* One row of destinations, always in the same place. */}
+          {!editing && view !== 'review' && (
+            <nav className="sticky top-0 z-10 flex gap-1 border-b border-cream-200 bg-cream-100/95 px-2 py-2 backdrop-blur">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.view}
+                  type="button"
+                  onClick={() => setView(tab.view)}
+                  className={`min-h-9 flex-1 rounded-lg text-[12px] font-bold transition-colors ${
+                    view === tab.view ? 'bg-navy-950 text-gold-300' : 'bg-white text-stone-600'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          )}
+
           <div className="p-3">
-            {editingSite ? (
+            {view === 'review' ? (
+              <Review
+                draft={content}
+                published={published}
+                busy={busy}
+                onRevert={(next) => update(next)}
+                onPublish={doPublish}
+                onBack={() => setView('sections')}
+              />
+            ) : view === 'history' ? (
+              <History
+                draft={content}
+                onRestore={(restored, label) => {
+                  history.set(restored, undefined);
+                  setDirty(true);
+                  pushToPreview(restored);
+                  setStatus(label);
+                  setView('sections');
+                }}
+                onBack={() => setView('sections')}
+              />
+            ) : view === 'insights' ? (
+              <Insights onBack={() => setView('sections')} />
+            ) : view === 'gallery' ? (
+              gallery ? (
+                <GalleryManager
+                  section={gallery}
+                  onChange={(patch) => patchSection(gallery.id, patch)}
+                  onBack={() => setView('sections')}
+                />
+              ) : (
+                <p className="rounded-xl bg-cream-50 p-4 text-center text-sm text-stone-600">
+                  אין מקטע גלריה באתר. אפשר להוסיף אותו מרשימת המקטעים.
+                </p>
+              )
+            ) : view === 'site' ? (
               <SiteForm
                 content={content}
-                onBack={() => setEditingSite(false)}
-                onChange={(patch) => update({ ...content, ...patch })}
+                onBack={() => setView('sections')}
+                onChange={(patch) => update({ ...content, ...patch }, 'site')}
               />
             ) : current ? (
               <SectionForm
                 section={current}
                 onBack={() => setEditing(null)}
-                onChange={(patch) => patchSection(current.id, patch)}
+                onChange={(patch, group) => patchSection(current.id, patch, group)}
               />
             ) : (
               <>
-                <button
-                  type="button"
-                  onClick={() => setEditingSite(true)}
-                  className="mb-3 flex w-full items-center gap-2 rounded-xl border border-cream-200 bg-white px-3 py-3 text-right hover:border-gold-500"
-                >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-cream-100 text-base">
-                    ☎
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-display text-sm font-bold text-navy-950">
-                      פרטי קשר והגדרות האתר
-                    </span>
-                    <span className="block text-[11px] text-stone-500">
-                      טלפון, כתובת, מפה, כותרת תחתונה, כותרת בגוגל
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-stone-400">‹</span>
-                </button>
+                {content.sections.length > 6 && (
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="חיפוש מקטע או טקסט…"
+                    className="mb-2 w-full min-h-11 rounded-xl border border-cream-200 bg-white px-3 text-[15px] focus:border-gold-500 focus:outline-none"
+                  />
+                )}
 
                 <ol className="space-y-1.5">
-                  {content.sections.map((s, i) => (
-                    <SectionRow
-                      key={s.id}
-                      ref={reorder.setRow(i)}
-                      section={s}
-                      isDragging={reorder.dragging === i}
-                      isTarget={reorder.dragging !== null && reorder.over === i}
-                      onDragStart={reorder.start(i)}
-                      onEdit={() => setEditing(s.id)}
-                      onToggle={() => patchSection(s.id, { enabled: !s.enabled })}
-                      onRemove={() => remove(s.id)}
-                    />
-                  ))}
+                  {visibleSections.map((s) => {
+                    const i = content.sections.indexOf(s);
+                    return (
+                      <SectionRow
+                        key={s.id}
+                        ref={reorder.setRow(i)}
+                        section={s}
+                        draggable={!query}
+                        isDragging={reorder.dragging === i}
+                        isTarget={reorder.dragging !== null && reorder.over === i}
+                        onDragStart={reorder.start(i)}
+                        onEdit={() => setEditing(s.id)}
+                        onToggle={() => patchSection(s.id, { enabled: !s.enabled })}
+                        onDuplicate={() => duplicate(s.id)}
+                        onRemove={() => remove(s.id)}
+                      />
+                    );
+                  })}
                 </ol>
 
+                {visibleSections.length === 0 && (
+                  <p className="rounded-xl bg-cream-50 p-4 text-center text-sm text-stone-600">
+                    לא נמצא מקטע שמתאים לחיפוש.
+                  </p>
+                )}
+
                 {adding ? (
-                  <div className="mt-2 rounded-xl border border-cream-200 bg-white p-3">
-                    <p className="mb-2 font-display text-sm font-bold">איזה מקטע להוסיף?</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {REPEATABLE.map((t) => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => add(t)}
-                          className="min-h-11 rounded-lg border border-cream-200 text-sm font-bold text-navy-950 hover:border-gold-500"
-                        >
-                          {SECTION_LABELS[t]}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setAdding(false)}
-                      className="mt-2 w-full text-xs text-stone-500"
-                    >
-                      ביטול
-                    </button>
-                  </div>
+                  <AddSection onAdd={add} onCancel={() => setAdding(false)} />
                 ) : (
                   <button
                     type="button"
@@ -408,7 +570,6 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
           </div>
         </div>
 
-        {/* Live preview */}
         <div className={`flex-1 bg-stone-500/10 ${pane === 'preview' ? '' : 'hidden lg:block'}`}>
           <iframe
             ref={frame}
@@ -433,25 +594,142 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
   );
 }
 
+/* ── Adding a section ─────────────────────────────────────────────────── */
+
+/**
+ * Holiday strips are the reason the panel exists, and writing one from a blank
+ * form every year is how they end up not being written. These are starting
+ * points, not templates: everything stays editable afterwards.
+ */
+const PRESETS: { label: string; type: SectionType; data: Record<string, unknown> }[] = [
+  {
+    label: 'ברכה לחג',
+    type: 'banner',
+    data: {
+      tone: 'festive',
+      title: 'חג שמח!',
+      body: 'המתחם פתוח להזמנות לשבתות ולימי החג — מספר המקומות מוגבל.',
+      ctaLabel: 'לקבלת הצעה',
+      ctaHref: '#contact',
+    },
+  },
+  {
+    label: 'מקומות אחרונים',
+    type: 'banner',
+    data: {
+      tone: 'gold',
+      title: 'נותרו מקומות אחרונים',
+      body: 'לשבתות הקרובות נותרו מספר תאריכים פנויים בלבד.',
+      ctaLabel: 'בדיקת זמינות',
+      ctaHref: '#contact',
+    },
+  },
+  {
+    label: 'הודעה כללית',
+    type: 'richText',
+    data: { title: 'כותרת', paragraphs: ['הטקסט שלכם כאן.'], align: 'center' },
+  },
+];
+
+function AddSection({
+  onAdd,
+  onCancel,
+}: {
+  onAdd: (type: SectionType, preset?: Record<string, unknown>) => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="mt-2 rounded-xl border border-cream-200 bg-white p-3">
+      <p className="mb-2 font-display text-sm font-bold">מוכן לשימוש</p>
+      <div className="grid gap-2">
+        {PRESETS.map((preset) => (
+          <button
+            key={preset.label}
+            type="button"
+            onClick={() => onAdd(preset.type, preset.data)}
+            className="min-h-11 rounded-lg bg-cream-100 px-3 text-right text-sm font-bold text-navy-950 hover:bg-gold-100"
+          >
+            {preset.label}
+            <span className="mr-2 text-[11px] font-normal text-stone-500">
+              {String(preset.data.title ?? '')}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <p className="mb-2 mt-4 font-display text-sm font-bold">מקטע ריק</p>
+      <div className="grid grid-cols-2 gap-2">
+        {REPEATABLE.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => onAdd(t)}
+            className="min-h-11 rounded-lg border border-cream-200 text-sm font-bold text-navy-950 hover:border-gold-500"
+          >
+            {SECTION_LABELS[t]}
+          </button>
+        ))}
+      </div>
+      <button type="button" onClick={onCancel} className="mt-2 w-full text-xs text-stone-500">
+        ביטול
+      </button>
+    </div>
+  );
+}
+
+/* ── Icons ────────────────────────────────────────────────────────────── */
+
+function GearIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={1.7} aria-hidden>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+    </svg>
+  );
+}
+
+function UndoIcon({ flip }: { flip?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`size-5 ${flip ? '-scale-x-100' : ''}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.9}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M9 14 4 9l5-5" />
+      <path d="M4 9h11a5 5 0 0 1 0 10h-4" />
+    </svg>
+  );
+}
+
+
 /* ── Section row ──────────────────────────────────────────────────────── */
 
 const SectionRow = ({
   ref,
   section,
+  draggable,
   isDragging,
   isTarget,
   onDragStart,
   onEdit,
   onToggle,
+  onDuplicate,
   onRemove,
 }: {
   ref: (el: HTMLElement | null) => void;
   section: Section;
+  draggable: boolean;
   isDragging: boolean;
   isTarget: boolean;
   onDragStart: (e: React.PointerEvent) => void;
   onEdit: () => void;
   onToggle: () => void;
+  onDuplicate: () => void;
   onRemove: () => void;
 }) => {
   const scheduled = Boolean(section.schedule?.from || section.schedule?.to);
@@ -468,9 +746,11 @@ const SectionRow = ({
     >
       <button
         type="button"
-        onPointerDown={onDragStart}
+        onPointerDown={draggable ? onDragStart : undefined}
+        disabled={!draggable}
         aria-label="גרירה לשינוי סדר"
-        className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-stone-400 hover:bg-cream-100 active:cursor-grabbing"
+        title={draggable ? 'גרירה לשינוי סדר' : 'נקו את החיפוש כדי לשנות סדר'}
+        className="flex size-9 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-stone-400 hover:bg-cream-100 active:cursor-grabbing disabled:cursor-default disabled:opacity-30"
       >
         <svg viewBox="0 0 24 24" className="size-5" fill="currentColor" aria-hidden>
           <circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" />
@@ -515,6 +795,16 @@ const SectionRow = ({
 
       <button
         type="button"
+        onClick={onDuplicate}
+        aria-label="שכפול"
+        title="שכפול"
+        className="size-8 shrink-0 rounded text-stone-400 hover:text-navy-950"
+      >
+        ⧉
+      </button>
+
+      <button
+        type="button"
         onClick={onRemove}
         aria-label="מחיקה"
         className="size-8 shrink-0 rounded text-stone-400 hover:text-red-600"
@@ -534,7 +824,7 @@ function SectionForm({
 }: {
   section: Section;
   onBack: () => void;
-  onChange: (patch: Partial<Section>) => void;
+  onChange: (patch: Partial<Section>, group?: string) => void;
 }) {
   const spec = FORM_SPEC[section.type] ?? [];
   const data = section.data as Record<string, unknown>;
@@ -560,7 +850,9 @@ function SectionForm({
             key={field.key}
             field={field}
             value={data}
-            onChange={(next) => onChange({ data: next } as Partial<Section>)}
+            // Grouping by field means undo steps back a field at a time
+            // rather than a character at a time.
+            onChange={(next) => onChange({ data: next } as Partial<Section>, `${section.id}:${field.key}`)}
           />
         ))}
       </div>

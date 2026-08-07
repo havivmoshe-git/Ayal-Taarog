@@ -265,6 +265,13 @@ export const FORM_SPEC: Record<SectionType, Field[]> = {
     { kind: 'textarea', key: 'disclaimer', label: 'הבהרה', rows: 2 },
     { kind: 'text', key: 'fallbackTitle', label: 'כותרת גיבוי' },
     { kind: 'text', key: 'fallbackBody', label: 'טקסט גיבוי' },
+    {
+      kind: 'textarea',
+      key: 'labels.privacy',
+      label: 'הודעת הפרטיות מתחת לכפתור',
+      rows: 2,
+      hint: 'זו ההודעה שמאפשרת לשמור פנייה שלא נשלחה. אל תסירו אותה.',
+    },
   ],
 
   imageBreak: [

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import App from './App';
 import { ContentProvider } from './content/ContentContext';
 import type { SiteContent } from './content/schema';
@@ -39,6 +39,15 @@ export default function Root() {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
+  // Analytics belong to the public site only: not to the panel, and not to the
+  // preview pane, where every keystroke would otherwise look like a visit.
+  const measured = useRef(false);
+  useEffect(() => {
+    if (route === 'admin' || route === 'preview' || measured.current) return;
+    measured.current = true;
+    void import('./lib/analytics').then((m) => m.initAnalytics());
+  }, [route]);
 
   // Every hook runs before the first branch: leaving `#/admin` for the site
   // must not change how many hooks this component called.

@@ -1,13 +1,15 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { LeadFormData } from '../content/schema';
 import { useContact } from '../content/ContentContext';
 import { buildInquiryMessage, whatsappLink, type Inquiry } from '../lib/whatsapp';
 import { SectionHeading } from './Section';
 import Reveal from './Reveal';
 import { PhoneIcon, WhatsAppIcon } from './Icons';
+import { recordLead, track } from '../lib/analytics';
 
 const EMPTY = (firstType: string): Inquiry => ({
   name: '',
+  phone: '',
   dateGregorian: '',
   dateHebrew: '',
   guests: '',
@@ -24,12 +26,61 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
   const contact = useContact();
   const [values, setValues] = useState<Inquiry>(() => EMPTY(data.types[0]));
   const [sent, setSent] = useState(false);
+  const started = useRef(false);
+  const latest = useRef(values);
+  latest.current = values;
+  const sentRef = useRef(false);
 
-  const update = (key: keyof Inquiry, value: string) =>
+  const update = (key: keyof Inquiry, value: string) => {
+    if (!started.current && value) {
+      started.current = true;
+      track('form_start');
+    }
     setValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Someone who filled the form in and left without sending it is the most
+  // valuable visitor the site ever loses, and until now they vanished without
+  // trace. The notice under the button says this is recorded — that notice is
+  // what separates following up from harvesting.
+  useEffect(() => {
+    const report = () => {
+      const v = latest.current;
+      const filled = [v.name, v.phone, v.dateGregorian, v.dateHebrew, v.guests, v.notes]
+        .filter((x) => x.trim()).length;
+      if (!filled || sentRef.current) return;
+      track('form_abandon', undefined, filled);
+      recordLead({
+        filled,
+        sent: false,
+        name: v.name.trim() || undefined,
+        phone: v.phone.trim() || undefined,
+        date_greg: v.dateGregorian || undefined,
+        date_heb: v.dateHebrew.trim() || undefined,
+        guests: v.guests.trim() || undefined,
+        kind: v.type || undefined,
+        notes: v.notes.trim().slice(0, 500) || undefined,
+      });
+    };
+    window.addEventListener('pagehide', report);
+    return () => window.removeEventListener('pagehide', report);
+  }, []);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    sentRef.current = true;
+    track('form_submit');
+    recordLead({
+      filled: 6,
+      sent: true,
+      name: values.name.trim() || undefined,
+      phone: values.phone.trim() || undefined,
+      date_greg: values.dateGregorian || undefined,
+      date_heb: values.dateHebrew.trim() || undefined,
+      guests: values.guests.trim() || undefined,
+      kind: values.type || undefined,
+      notes: values.notes.trim().slice(0, 500) || undefined,
+    });
     const url = whatsappLink(contact.whatsappNumber, buildInquiryMessage(values));
     window.open(url, '_blank', 'noopener,noreferrer');
     setSent(true);
@@ -60,6 +111,23 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
                 value={values.name}
                 onChange={(e) => update('name', e.target.value)}
                 className={fieldClass}
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className={labelClass} htmlFor="phone">
+                {data.labels.phone ?? 'טלפון'}
+              </label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder={data.labels.phonePlaceholder ?? '050-0000000'}
+                value={values.phone}
+                onChange={(e) => update('phone', e.target.value)}
+                className={`${fieldClass} ltr-nums text-right`}
               />
             </div>
 
@@ -151,6 +219,10 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
           </button>
 
           <p className="mt-3 text-center text-xs text-stone-500">{data.disclaimer}</p>
+          <p className="mt-1 text-center text-[11px] leading-relaxed text-stone-500">
+            {data.labels.privacy ??
+              'הפרטים שתמלאו כאן נשמרים אצלנו כדי שנוכל לחזור אליכם, גם אם לא תשלחו את הפנייה.'}
+          </p>
 
           {/* Pop-up blockers and in-app browsers sometimes swallow window.open,
               so once we've tried, always offer a direct way through. */}

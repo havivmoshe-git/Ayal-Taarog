@@ -13,6 +13,23 @@ const hint = 'mt-1 text-xs text-stone-500';
 
 type Rec = Record<string, unknown>;
 
+/**
+ * A field key may be a dotted path, so a spec can reach a nested value —
+ * `labels.privacy` — without the section needing a bespoke editor for it.
+ */
+function getPath(source: Rec, key: string): unknown {
+  return key
+    .split('.')
+    .reduce<unknown>((acc, part) => (acc as Rec | undefined)?.[part], source);
+}
+
+function setPath(source: Rec, key: string, value: unknown): Rec {
+  const [head, ...rest] = key.split('.');
+  if (rest.length === 0) return { ...source, [head]: value };
+  const child = (source[head] ?? {}) as Rec;
+  return { ...source, [head]: setPath(child, rest.join('.'), value) };
+}
+
 export function FieldRenderer({
   field,
   value,
@@ -22,8 +39,8 @@ export function FieldRenderer({
   value: Rec;
   onChange: (next: Rec) => void;
 }) {
-  const set = (key: string, v: unknown) => onChange({ ...value, [key]: v });
-  const current = value[field.key];
+  const set = (key: string, v: unknown) => onChange(setPath(value, key, v));
+  const current = getPath(value, field.key);
 
   switch (field.kind) {
     case 'text':

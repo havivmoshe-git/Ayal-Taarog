@@ -1,0 +1,31 @@
+name: בדיקת תקינות
+
+# Every four hours, and on demand. Four hours is a deliberate choice: it is
+# frequent enough that a broken site is noticed the same day, and it doubles as
+# the keep-alive that stops Supabase's free tier pausing the project after a
+# week of quiet — which is the most likely way this site would break by itself.
+on:
+  schedule:
+    - cron: '17 */4 * * *'
+  workflow_dispatch:
+
+# A failed scheduled run emails the repository owner, which is the alert.
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: בדיקות
+        env:
+          SITE_URL: ${{ vars.SITE_URL || 'https://ayal-taarog.vercel.app' }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://jgrpwwkpfnykapkmefqp.supabase.co' }}
+          # The anon key is designed to be public and is already in the site's
+          # own bundle; it is a repository variable rather than a secret so the
+          # results stay readable in the run summary.
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncnB3d2twZm55a2Fwa21lZnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwOTk1NTcsImV4cCI6MjEwMTY3NTU1N30.w4muiqbkV68k1u4WsIrPo8ubEB56-dMyROjVWRIj5Rk' }}
+        run: node scripts/monitor.mjs

@@ -32,12 +32,14 @@
 
 (אם תחברו דומיין משלכם בהמשך — עדכנו את הערך הזה לכתובת החדשה ופרסו מחדש.)
 
-כשיגיעו פרטי Supabase יתווספו כאן עוד שניים:
+**וגם שני אלה — בלעדיהם העריכות לא יופיעו באתר:**
 
 | Name | Value |
 |---|---|
-| `VITE_SUPABASE_URL` | `https://xxxxx.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | `eyJ...` |
+| `VITE_SUPABASE_URL` | `https://jgrpwwkpfnykapkmefqp.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpncnB3d2twZm55a2Fwa21lZnFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwOTk1NTcsImV4cCI6MjEwMTY3NTU1N30.w4muiqbkV68k1u4WsIrPo8ubEB56-dMyROjVWRIj5Rk` |
+
+מפתח ה-`anon` נמצא כאן בכוונה — הוא מיועד לחשיפה פומבית ומגיע ממילא לכל מבקר בתוך קוד האתר. נבדק בפועל שהוא **לא** מאפשר כתיבה: ניסיון עריכה איתו לא שינה דבר, וניסיון העלאת קובץ הוחזר עם `403 row-level security policy`.
 
 ### 3. Deploy
 

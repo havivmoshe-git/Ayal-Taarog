@@ -12,3 +12,6 @@ public/gallery/
 # are deliberately not published. This repository is public, so they are kept
 # out of it entirely rather than merely unlinked from the site.
 assets/private/
+
+# Local secrets — real values live in the host dashboards.
+.env*.local

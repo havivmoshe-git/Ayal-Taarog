@@ -110,8 +110,15 @@ function Editor({ session, onSignOut }: { session: Session; onSignOut: () => voi
   const [status, setStatus] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   useEffect(() => {
-    store.loadDraft().then(setContent);
+    // A silent failure here leaves the panel on "loading" forever with nothing
+    // to act on, so surface it instead.
+    store
+      .loadDraft()
+      .then(setContent)
+      .catch((e) => setLoadError(e instanceof Error ? e.message : 'טעינת התוכן נכשלה'));
   }, []);
 
   // Autosave the draft shortly after typing stops. Losing edits to a closed
@@ -135,6 +142,26 @@ function Editor({ session, onSignOut }: { session: Session; onSignOut: () => voi
     setContent(next);
     setDirty(true);
   }, []);
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-cream-100 px-6">
+        <div className="max-w-sm text-center">
+          <h2 className="text-lg font-bold">לא הצלחתי לטעון את התוכן</h2>
+          <p dir="ltr" className="mt-2 break-words rounded-lg bg-white p-3 text-xs text-stone-600">
+            {loadError}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="btn btn-gold mt-5"
+          >
+            ניסיון נוסף
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!content) return <Splash>טוען תוכן…</Splash>;
 

@@ -34,7 +34,13 @@ jobs:
       # assets/source/ so the repo stays free of derived binaries.
       - run: npm run images
 
+      # GitHub Pages serves from a repository sub-path; Vercel serves from the
+      # domain root. Both build from the same commit, so the Pages site keeps
+      # running unchanged while Vercel is being set up alongside it.
       - run: npm run build
+        env:
+          VITE_BASE_PATH: /Ayal-Taarog/
+          VITE_SITE_URL: https://havivmoshe-git.github.io/Ayal-Taarog
 
       - uses: actions/configure-pages@v5
 

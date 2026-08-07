@@ -18,6 +18,8 @@ export interface ContentStore {
   readonly isRemote: boolean;
   signIn(email: string, password: string): Promise<Session>;
   signOut(): Promise<void>;
+  /** Lets the owner change their own password without visiting Supabase. */
+  changePassword(next: string): Promise<void>;
   currentSession(): Promise<Session | null>;
   loadDraft(): Promise<SiteContent>;
   saveDraft(content: SiteContent): Promise<void>;
@@ -48,6 +50,10 @@ class LocalStore implements ContentStore {
 
   async signOut() {
     localStorage.removeItem(LOCAL_SESSION);
+  }
+
+  async changePassword() {
+    // Nothing to change without a real account; the panel says as much.
   }
 
   async currentSession(): Promise<Session | null> {
@@ -97,6 +103,12 @@ class SupabaseStore implements ContentStore {
   async signOut() {
     const sb = await getSupabase();
     await sb.auth.signOut();
+  }
+
+  async changePassword(next: string) {
+    const sb = await getSupabase();
+    const { error } = await sb.auth.updateUser({ password: next });
+    if (error) throw new Error(translateAuthError(error.message));
   }
 
   async currentSession(): Promise<Session | null> {

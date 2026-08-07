@@ -10,7 +10,9 @@ import type { SectionType } from '../content/schema';
  */
 
 export type Field =
-  | { kind: 'text'; key: string; label: string; hint?: string }
+  /** `ltr` is for URLs and phone numbers: right-aligned in an RTL form they
+   *  render with their punctuation reordered and become unreadable. */
+  | { kind: 'text'; key: string; label: string; hint?: string; ltr?: boolean }
   | { kind: 'textarea'; key: string; label: string; rows?: number; hint?: string }
   | { kind: 'number'; key: string; label: string }
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
@@ -249,7 +251,7 @@ export const FORM_SPEC: Record<SectionType, Field[]> = {
         },
         { kind: 'text', key: 'title', label: 'כותרת' },
         { kind: 'textarea', key: 'body', label: 'תיאור', rows: 2 },
-        { kind: 'text', key: 'file', label: 'נתיב הקובץ' },
+        { kind: 'text', key: 'file', label: 'נתיב הקובץ', ltr: true },
         { kind: 'text', key: 'cta', label: 'כפתור' },
         { kind: 'text', key: 'badge', label: 'תגית', hint: 'למשל: 4 עמודים' },
       ],
@@ -286,7 +288,7 @@ export const FORM_SPEC: Record<SectionType, Field[]> = {
     { kind: 'text', key: 'title', label: 'כותרת' },
     { kind: 'textarea', key: 'body', label: 'טקסט', rows: 2 },
     { kind: 'text', key: 'ctaLabel', label: 'כפתור', hint: 'לא חובה' },
-    { kind: 'text', key: 'ctaHref', label: 'קישור הכפתור', hint: 'למשל #contact' },
+    { kind: 'text', key: 'ctaHref', label: 'קישור הכפתור', hint: 'למשל #contact', ltr: true },
   ],
 
   richText: [
@@ -304,6 +306,58 @@ export const FORM_SPEC: Record<SectionType, Field[]> = {
     },
   ],
 };
+
+/**
+ * The values that belong to the site rather than to any one section: phone
+ * numbers, the footer, and the text search engines and WhatsApp previews show.
+ * Same field vocabulary as the sections, so the same renderer draws them.
+ */
+export const SITE_GROUPS: { key: 'contact' | 'footer' | 'seo'; label: string; fields: Field[] }[] = [
+  {
+    key: 'contact',
+    label: 'פרטי קשר',
+    fields: [
+      { kind: 'text', key: 'whatsappNumber', label: 'מספר וואטסאפ', hint: 'בפורמט בינלאומי, למשל 972501234567', ltr: true },
+      { kind: 'text', key: 'phoneDisplay', label: 'טלפון כפי שמוצג', ltr: true },
+      { kind: 'text', key: 'phoneHref', label: 'טלפון לחיוג', hint: 'הספרות בלבד, ללא מקפים', ltr: true },
+      { kind: 'text', key: 'synagogue', label: 'שם בית הכנסת' },
+      { kind: 'text', key: 'address', label: 'כתובת מלאה' },
+      { kind: 'text', key: 'addressShort', label: 'כתובת מקוצרת' },
+      { kind: 'text', key: 'mapsUrl', label: 'קישור ל-Google Maps', ltr: true },
+      { kind: 'text', key: 'wazeUrl', label: 'קישור ל-Waze', ltr: true },
+      { kind: 'text', key: 'catalogUrl', label: 'קישור לקטלוג', ltr: true },
+      { kind: 'text', key: 'instituteUrl', label: 'קישור לאתר המוסדות', ltr: true },
+    ],
+  },
+  {
+    key: 'footer',
+    label: 'כותרת תחתונה',
+    fields: [
+      { kind: 'textarea', key: 'tagline', label: 'משפט פתיחה', rows: 2 },
+      { kind: 'text', key: 'aboutTitle', label: 'כותרת "אודות"' },
+      { kind: 'textarea', key: 'about', label: 'טקסט אודות', rows: 4 },
+      { kind: 'text', key: 'linksTitle', label: 'כותרת הקישורים' },
+      { kind: 'text', key: 'contactTitle', label: 'כותרת יצירת הקשר' },
+      { kind: 'text', key: 'instituteLink', label: 'תווית הקישור למוסדות' },
+      { kind: 'text', key: 'catalogLink', label: 'תווית הקישור לקטלוג' },
+      { kind: 'text', key: 'rights', label: 'שורת זכויות' },
+    ],
+  },
+  {
+    key: 'seo',
+    label: 'כותרת בגוגל ובשיתוף',
+    fields: [
+      { kind: 'text', key: 'title', label: 'כותרת הדף' },
+      {
+        kind: 'textarea',
+        key: 'description',
+        label: 'תיאור',
+        rows: 3,
+        hint: 'עד כ-160 תווים. זה הטקסט שנראה בתוצאות החיפוש ובשיתוף בוואטסאפ.',
+      },
+    ],
+  },
+];
 
 /** Blank payloads for sections the editor can create. */
 export const NEW_SECTION_DATA: Partial<Record<SectionType, unknown>> = {

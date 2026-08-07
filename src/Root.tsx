@@ -40,6 +40,11 @@ export default function Root() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  // Every hook runs before the first branch: leaving `#/admin` for the site
+  // must not change how many hooks this component called.
+  const isPreview = route === 'preview';
+  const draft = useMemo(() => (isPreview ? readPreview() : null), [isPreview]);
+
   if (route === 'admin') {
     return (
       <Suspense
@@ -54,11 +59,9 @@ export default function Root() {
     );
   }
 
-  const draft = useMemo(() => (route === 'preview' ? readPreview() : null), [route]);
-
   return (
-    <ContentProvider override={draft}>
-      {draft && (
+    <ContentProvider override={draft} previewMode={isPreview}>
+      {isPreview && (
         <div className="fixed inset-x-0 top-0 z-50 bg-gold-500 py-1 text-center font-display text-xs font-bold text-navy-950">
           תצוגה מקדימה — כך ייראה האתר אחרי פרסום
         </div>

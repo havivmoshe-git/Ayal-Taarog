@@ -31,7 +31,8 @@ export function FieldRenderer({
         <div>
           <label className={label}>{field.label}</label>
           <input
-            className={input}
+            className={field.ltr ? `${input} text-left` : input}
+            dir={field.ltr ? 'ltr' : undefined}
             value={(current as string) ?? ''}
             onChange={(e) => set(field.key, e.target.value)}
           />

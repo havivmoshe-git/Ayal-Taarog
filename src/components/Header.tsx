@@ -4,6 +4,7 @@ import { GENERAL_ENQUIRY, whatsappLink } from '../lib/whatsapp';
 import { useContact } from '../content/ContentContext';
 import { useScrollSpy } from '../hooks/useScrollSpy';
 import { CloseIcon, WhatsAppIcon } from './Icons';
+import { mediaUrl } from '../lib/media';
 
 export default function Header() {
   const { nav } = useContent();
@@ -45,7 +46,28 @@ export default function Header() {
         }`}
       >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 sm:px-6">
-          <a href="#top" className="flex min-w-0 items-baseline gap-2 text-cream-50">
+          <a href="#top" className="flex min-w-0 items-center gap-2 text-cream-50">
+            {/*
+              The crest, small, beside the wordmark.
+
+              It was in the hero at 150px and did not sit well: it repeated the
+              four lines printed directly beneath it and it grew the page.
+              Here it does the one job a mark is for — identity, at a glance,
+              on every screen of the site rather than only the first.
+
+              A drop shadow because the plaque's fill is the same navy as the
+              scrolled header: without it the shape dissolves and only the gold
+              outline survives.
+            */}
+            {hero?.logo && (
+              <img
+                src={mediaUrl(hero.logo, 'sm')}
+                alt=""
+                width={890}
+                height={814}
+                className="h-7 w-auto shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] sm:h-8"
+              />
+            )}
             <span className="font-display text-lg font-black sm:text-xl">{hero?.brand}</span>
             {/* On a phone the header doubles as a "you are here" marker. */}
             <span
@@ -116,7 +138,12 @@ export default function Header() {
       {menuOpen && (
         <div className="fixed inset-0 z-50 flex flex-col bg-navy-950 lg:hidden">
           <div className="flex items-center justify-between px-5 py-4">
-            <span className="font-display text-lg font-black text-cream-50">{hero?.brand}</span>
+            <span className="flex items-center gap-2">
+              {hero?.logo && (
+                <img src={mediaUrl(hero.logo, 'sm')} alt="" width={890} height={814} className="h-7 w-auto shrink-0" />
+              )}
+              <span className="font-display text-lg font-black text-cream-50">{hero?.brand}</span>
+            </span>
             <button
               type="button"
               onClick={() => setMenuOpen(false)}

@@ -57,8 +57,11 @@ const HEADING: Field[] = [
 
 export const FORM_SPEC: Record<SectionType, Field[]> = {
   hero: [
-    { kind: 'image', key: 'logo', label: 'לוגו', hint: 'ריק = לא מוצג' },
-    { kind: 'text', key: 'logoAlt', label: 'תיאור הלוגו', hint: 'לקוראי מסך ולגוגל' },
+    // No alt-text field: the crest sits directly beside the venue's name in
+    // the header, so a screen reader announcing it too would say the same
+    // thing twice. It ships with an empty alt, which is the correct markup
+    // for an image a neighbouring label already covers.
+    { kind: 'image', key: 'logo', label: 'לוגו', hint: 'מוצג בסרגל העליון לצד שם המתחם. ריק = לא מוצג.' },
     { kind: 'text', key: 'eyebrow', label: 'בס״ד / כיתוב עליון' },
     { kind: 'text', key: 'kicker', label: 'שורה מעל השם' },
     { kind: 'text', key: 'brand', label: 'שם המתחם' },

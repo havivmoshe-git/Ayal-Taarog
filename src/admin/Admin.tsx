@@ -625,6 +625,20 @@ const PRESETS: { label: string; type: SectionType; data: Record<string, unknown>
     },
   },
   {
+    label: 'פידבקים מאורחים',
+    type: 'testimonials',
+    data: {
+      eyebrow: 'מה אומרים עלינו',
+      title: 'פידבקים מהאורחים',
+      subtitle: '',
+      showSummary: true,
+      summaryLabel: '',
+      items: [
+        { name: 'שם הכותב', context: 'שבת חתן, חודש ושנה', quote: 'הטקסט של הפידבק כאן.', rating: 5 },
+      ],
+    },
+  },
+  {
     label: 'הודעה כללית',
     type: 'richText',
     data: { title: 'כותרת', paragraphs: ['הטקסט שלכם כאן.'], align: 'center' },

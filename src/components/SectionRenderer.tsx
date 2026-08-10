@@ -13,6 +13,7 @@ import LeadForm from './LeadForm';
 import ImageBreak from './ImageBreak';
 import Banner from './Banner';
 import RichText from './RichText';
+import Testimonials from './Testimonials';
 
 /**
  * Maps a stored section onto its component.
@@ -53,6 +54,8 @@ export default function SectionRenderer({ section }: { section: Section }) {
       return <Banner id={id} data={section.data} />;
     case 'richText':
       return <RichText id={id} data={section.data} />;
+    case 'testimonials':
+      return <Testimonials id={id} data={section.data} />;
     default:
       // An unknown type means content written by a newer build. Render nothing
       // rather than crashing the page around it.

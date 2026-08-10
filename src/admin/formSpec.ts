@@ -15,7 +15,17 @@ export type Field =
   | { kind: 'text'; key: string; label: string; hint?: string; ltr?: boolean }
   | { kind: 'textarea'; key: string; label: string; rows?: number; hint?: string }
   | { kind: 'number'; key: string; label: string }
-  | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
+  /** `coerce` converts the option's string back to the type the schema
+   *  declares. Without it a rating select writes "5" into a number field, and
+   *  averaging it concatenates instead of adding. */
+  | {
+      kind: 'select';
+      key: string;
+      label: string;
+      options: { value: string; label: string }[];
+      coerce?: 'number' | 'boolean';
+      hint?: string;
+    }
   | { kind: 'image'; key: string; label: string; hint?: string }
   | { kind: 'strings'; key: string; label: string; itemLabel: string }
   | {
@@ -274,6 +284,52 @@ export const FORM_SPEC: Record<SectionType, Field[]> = {
     },
   ],
 
+  testimonials: [
+    ...HEADING,
+    {
+      kind: 'list',
+      key: 'items',
+      label: 'פידבקים',
+      itemLabel: 'פידבק',
+      titleKey: 'name',
+      fields: [
+        { kind: 'text', key: 'name', label: 'שם הכותב' },
+        { kind: 'text', key: 'context', label: 'מתי ומה', hint: 'למשל: שבת חתן, אלול תשפ״ה' },
+        { kind: 'textarea', key: 'quote', label: 'מה כתבו', rows: 4 },
+        {
+          kind: 'select',
+          key: 'rating',
+          label: 'דירוג',
+          coerce: 'number',
+          options: [
+            { value: '5', label: '★★★★★' },
+            { value: '4', label: '★★★★' },
+            { value: '3', label: '★★★' },
+            { value: '2', label: '★★' },
+            { value: '1', label: '★' },
+          ],
+        },
+      ],
+    },
+    {
+      kind: 'select',
+      key: 'showSummary',
+      label: 'רצועת הדירוג הממוצע',
+      coerce: 'boolean',
+      hint: 'מופיעה רק משלושה פידבקים ומעלה — ממוצע על פידבק אחד לא אומר כלום.',
+      options: [
+        { value: 'true', label: 'מוצגת' },
+        { value: 'false', label: 'מוסתרת' },
+      ],
+    },
+    {
+      kind: 'text',
+      key: 'summaryLabel',
+      label: 'הכיתוב מתחת לממוצע',
+      hint: 'ריק = "מתוך N חוות דעת"',
+    },
+  ],
+
   imageBreak: [
     { kind: 'image', key: 'image', label: 'תמונה' },
     { kind: 'text', key: 'line', label: 'המשפט' },
@@ -374,6 +430,19 @@ export const NEW_SECTION_DATA: Partial<Record<SectionType, unknown>> = {
     body: 'המתחם פתוח להזמנות לשבתות החג — מספר המקומות מוגבל.',
     ctaLabel: 'לקבלת הצעה',
     ctaHref: '#contact',
+  },
+  testimonials: {
+    eyebrow: 'מה אומרים עלינו',
+    title: 'פידבקים מהאורחים',
+    subtitle: '',
+    showSummary: true,
+    summaryLabel: '',
+    // Deliberately obvious placeholders. A plausible-looking name attached to
+    // a review nobody wrote is a fabricated record, and the whole point of
+    // this section is that visitors believe it.
+    items: [
+      { name: 'שם הכותב', context: 'שבת חתן, חודש ושנה', quote: 'הטקסט של הפידבק כאן.', rating: 5 },
+    ],
   },
   richText: {
     title: 'כותרת חדשה',

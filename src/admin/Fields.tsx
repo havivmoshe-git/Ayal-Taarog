@@ -91,8 +91,17 @@ export function FieldRenderer({
           <label className={label}>{field.label}</label>
           <select
             className={input}
-            value={(current as string) ?? field.options[0].value}
-            onChange={(e) => set(field.key, e.target.value)}
+            value={String(current ?? field.options[0].value)}
+            onChange={(e) =>
+              set(
+                field.key,
+                field.coerce === 'number'
+                  ? Number(e.target.value)
+                  : field.coerce === 'boolean'
+                    ? e.target.value === 'true'
+                    : e.target.value,
+              )
+            }
           >
             {field.options.map((o) => (
               <option key={o.value} value={o.value}>
@@ -100,6 +109,7 @@ export function FieldRenderer({
               </option>
             ))}
           </select>
+          {field.hint && <p className={hint}>{field.hint}</p>}
         </div>
       );
 
@@ -309,7 +319,16 @@ function ListField({
   const blank = (): Rec => {
     const o: Rec = {};
     for (const f of field.fields) {
-      o[f.key] = f.kind === 'number' ? 0 : f.kind === 'list' || f.kind === 'strings' ? [] : '';
+      if (f.kind === 'number') o[f.key] = 0;
+      else if (f.kind === 'list' || f.kind === 'strings') o[f.key] = [];
+      else if (f.kind === 'select') {
+        // A new item starts on the first option, in the type the schema
+        // declares — an empty string in a numeric field would survive all the
+        // way to arithmetic on the site.
+        const first = f.options[0].value;
+        o[f.key] =
+          f.coerce === 'number' ? Number(first) : f.coerce === 'boolean' ? first === 'true' : first;
+      } else o[f.key] = '';
     }
     return o;
   };

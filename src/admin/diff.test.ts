@@ -87,6 +87,39 @@ roundTrip('menu moved to the top', (c) => {
   c.sections.splice(1, 0, s);
 }, 1, /סדר המקטעים/);
 
+console.log('\ntestimonials');
+roundTrip('a feedback section added', (c) => {
+  c.sections.push({ id: 'testimonials-test', type: 'testimonials', enabled: true, data: {
+    eyebrow: 'מה אומרים עלינו', title: 'פידבקים מהאורחים', subtitle: '',
+    showSummary: true, summaryLabel: '',
+    items: [{ name: 'איתן', context: 'שבת חתן', quote: 'היה מושלם.', rating: 5 }],
+  } } as Section);
+}, 1, /נוסף מקטע/);
+
+{
+  const before = clone(snapshot);
+  before.sections.push({ id: 'testimonials-test', type: 'testimonials', enabled: true, data: {
+    eyebrow: 'מה אומרים עלינו', title: 'פידבקים מהאורחים', subtitle: '',
+    showSummary: true, summaryLabel: '',
+    items: [{ name: 'איתן', context: 'שבת חתן', quote: 'היה מושלם.', rating: 5 }],
+  } } as Section);
+
+  const after = clone(before);
+  (after.sections.at(-1)!.data as any).items.push({ name: 'דוד', context: '', quote: 'מעולה.', rating: 4 });
+  const added = diffContent(before, after);
+  check('adding a feedback is one change', added.length === 1, added.map(c => c.summary).join('|'));
+  check('described by the reviewer name', /דוד/.test(added[0].summary), added[0].summary);
+  check('reverting removes just that one', eq(revertChange(after, added[0]), before));
+
+  const rated = clone(before);
+  (rated.sections.at(-1)!.data as any).items[0].rating = 3;
+  const change = diffContent(before, rated);
+  check('changing a rating is one change', change.length === 1, change.map(c => c.summary).join('|'));
+  check('rating named in Hebrew', /דירוג/.test(change[0].summary), change[0].summary);
+  check('rating reverts to a number, not a string',
+    (revertChange(rated, change[0]).sections.at(-1)!.data as any).items[0].rating === 5);
+}
+
 console.log('\nmany changes at once, reverting only one');
 {
   const before = snapshot;

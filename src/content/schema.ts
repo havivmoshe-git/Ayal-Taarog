@@ -22,7 +22,8 @@ export type SectionType =
   | 'leadForm'
   | 'imageBreak'
   | 'banner'
-  | 'richText';
+  | 'richText'
+  | 'testimonials';
 
 /**
  * Optional visibility window, as ISO dates (yyyy-mm-dd).
@@ -182,6 +183,31 @@ export type LeadFormData = {
   fallbackBody: string;
 };
 
+/**
+ * What guests said. The rating is out of five and drives the stars.
+ *
+ * `summary` is opt-in rather than computed: an average over three reviews is
+ * a number that says more about the sample than the venue, and the owner is
+ * better placed than the code to decide when it is worth showing.
+ */
+export type Testimonial = {
+  name: string;
+  /** When and what — "שבת חתן, אלול תשפ״ה". Optional; the quote carries itself. */
+  context: string;
+  quote: string;
+  rating: number;
+};
+
+export type TestimonialsData = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  items: Testimonial[];
+  /** Off hides the average strip entirely. */
+  showSummary: boolean;
+  summaryLabel: string;
+};
+
 export type ImageBreakData = {
   image: string;
   imageUrl?: string;
@@ -222,7 +248,8 @@ export type Section =
   | Base<'leadForm', LeadFormData>
   | Base<'imageBreak', ImageBreakData>
   | Base<'banner', BannerData>
-  | Base<'richText', RichTextData>;
+  | Base<'richText', RichTextData>
+  | Base<'testimonials', TestimonialsData>;
 
 export type SectionOf<T extends SectionType> = Extract<Section, { type: T }>;
 
@@ -283,8 +310,9 @@ export const SECTION_LABELS: Record<SectionType, string> = {
   leadForm: 'טופס פנייה',
   imageBreak: 'רצועת תמונה',
   banner: 'רצועה חגיגית',
+  testimonials: 'פידבקים',
   richText: 'טקסט חופשי',
 };
 
 /** Types the editor may add more than one of. */
-export const REPEATABLE: SectionType[] = ['imageBreak', 'banner', 'richText'];
+export const REPEATABLE: SectionType[] = ['imageBreak', 'banner', 'richText', 'testimonials'];

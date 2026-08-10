@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0B1A2F" />
 
-    <title>מתחם האירוח כאייל תערוג | שבתות חתן ואירועים — הר חומה, ירושלים</title>
+    <title>שבת חתן ושבע ברכות בירושלים | מתחם האירוח כאייל תערוג — הר חומה</title>
     <meta
       name="description"
-      content="מתחם האירוח ״כאייל תערוג״ בבית הכנסת ״חסדי שמואל״ בראשות הרב אייל עמרמי שליט״א. 14 חדרי לינה עם שירותים פרטיים, עד 79 אורחים, שף פרטי ו-3 סעודות שבת בכשרות מחפוד, אולם אירוח פרטי ותפילות מרגשות. הר חומה, ירושלים."
+      content="מתחם אירוח לשבת חתן, שבע ברכות ושבתות התעלות בבית הכנסת ״חסדי שמואל״ בהר חומה, ירושלים, בראשות הרב אייל עמרמי שליט״א. 14 חדרי לינה עם שירותים ומקלחת פרטיים, עד 79 אורחים, שף פרטי ו-3 סעודות שבת בכשרות חלק הרב מחפוד, אולם אירוח פרטי ומתחם תפילה משלכם."
     />
     <link rel="canonical" href="%VITE_SITE_URL%/" />
 
@@ -16,7 +16,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="he_IL" />
     <meta property="og:site_name" content="כאייל תערוג — מתחם אירוח" />
-    <meta property="og:title" content="מתחם האירוח כאייל תערוג | שבתות חתן ואירועים" />
+    <meta property="og:title" content="שבת חתן ושבע ברכות בירושלים | מתחם האירוח כאייל תערוג" />
     <meta
       property="og:description"
       content="חוויית אירוח מלאה במקום אחד — לינה, שף פרטי, 3 סעודות שבת בכשרות מחפוד, אולם פרטי ותפילות מרגשות. הר חומה, ירושלים."
@@ -38,43 +38,79 @@
       rel="stylesheet"
     />
 
+    <!--
+      Structured data. Every claim here also appears in the page's own text —
+      schema that says more than the page does is a liability, not an asset.
+      No aggregateRating: reviews a business gathers about itself on its own
+      site are self-serving, and Google will not use them.
+    -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "LodgingBusiness",
-        "name": "מתחם האירוח כאייל תערוג",
-        "alternateName": "בית הכנסת חסדי שמואל — מתחם אירוח",
-        "description": "מתחם אירוח לשבתות חתן ואירועים בבית הכנסת ״חסדי שמואל״ בראשות הרב אייל עמרמי שליט״א. 14 חדרי לינה, עד 79 אורחים, שף פרטי ו-3 סעודות שבת בכשרות מחפוד.",
-        "url": "%VITE_SITE_URL%/",
-        "telephone": "+972522701187",
-        "priceRange": "$$",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "רחוב הרב מן ההר 4",
-          "addressLocality": "ירושלים",
-          "addressRegion": "הר חומה",
-          "addressCountry": "IL"
-        },
-        "geo": {
-          "@type": "GeoCoordinates",
-          "latitude": 31.7222,
-          "longitude": 35.2258
-        },
-        "amenityFeature": [
-          { "@type": "LocationFeatureSpecification", "name": "שירותים ומקלחת פרטיים בכל חדר", "value": true },
-          { "@type": "LocationFeatureSpecification", "name": "אולם אירוח פרטי", "value": true },
-          { "@type": "LocationFeatureSpecification", "name": "שף פרטי ו-3 סעודות שבת", "value": true },
-          { "@type": "LocationFeatureSpecification", "name": "מתחם תפילה פרטי לאורחי האירוע", "value": true },
-          { "@type": "LocationFeatureSpecification", "name": "פינת קפה ומתקן מים קרים", "value": true },
-          { "@type": "LocationFeatureSpecification", "name": "כשרות חלק הרב מחפוד", "value": true },
-          { "@type": "LocationFeatureSpecification", "name": "משגיח כשרות לאורך כל השבת", "value": true },
-          { "@type": "LocationFeatureSpecification", "name": "מיטות לילדים ומיטות רזרבה", "value": true }
-        ],
-        "numberOfRooms": 14,
-        "numberOfBeds": 79,
-        "maximumAttendeeCapacity": 79,
-        "servesCuisine": "כשר — בשרי",
-        "hasMenu": "%VITE_SITE_URL%/docs/menu-shabbat.pdf"
+        "@graph": [
+          {
+            "@type": ["LodgingBusiness", "EventVenue"],
+            "@id": "%VITE_SITE_URL%/#venue",
+            "name": "מתחם האירוח כאייל תערוג",
+            "alternateName": ["כאייל תערוג", "מתחם אירוח כאייל תערוג הר חומה", "בית הכנסת חסדי שמואל — מתחם אירוח"],
+            "description": "מתחם אירוח לשבת חתן, שבע ברכות ושבתות התעלות בבית הכנסת ״חסדי שמואל״ בהר חומה, ירושלים, בראשות הרב אייל עמרמי שליט״א. 14 חדרי לינה עם שירותים ומקלחת פרטיים, עד 79 אורחים, שף פרטי ו-3 סעודות שבת בכשרות חלק הרב מחפוד.",
+            "url": "%VITE_SITE_URL%/",
+            "image": "%VITE_SITE_URL%/gallery/og-image.jpg",
+            "telephone": "+972522701187",
+            "priceRange": "$$",
+            "currenciesAccepted": "ILS",
+            "isAccessibleForFree": false,
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "רחוב הרב מן ההר 4",
+              "addressLocality": "ירושלים",
+              "addressRegion": "הר חומה",
+              "addressCountry": "IL"
+            },
+            "geo": { "@type": "GeoCoordinates", "latitude": 31.7222, "longitude": 35.2258 },
+            "areaServed": [
+              { "@type": "City", "name": "ירושלים" },
+              { "@type": "Country", "name": "ישראל" }
+            ],
+            "parentOrganization": { "@id": "%VITE_SITE_URL%/#institutions" },
+            "amenityFeature": [
+              { "@type": "LocationFeatureSpecification", "name": "שירותים ומקלחת פרטיים בכל חדר", "value": true },
+              { "@type": "LocationFeatureSpecification", "name": "אולם אירוח פרטי", "value": true },
+              { "@type": "LocationFeatureSpecification", "name": "שף פרטי ו-3 סעודות שבת", "value": true },
+              { "@type": "LocationFeatureSpecification", "name": "מתחם תפילה פרטי לאורחי האירוע", "value": true },
+              { "@type": "LocationFeatureSpecification", "name": "פינת קפה ומתקן מים קרים", "value": true },
+              { "@type": "LocationFeatureSpecification", "name": "כשרות חלק הרב מחפוד", "value": true },
+              { "@type": "LocationFeatureSpecification", "name": "משגיח כשרות לאורך כל השבת", "value": true },
+              { "@type": "LocationFeatureSpecification", "name": "מיטות לילדים ומיטות רזרבה", "value": true }
+            ],
+            "numberOfRooms": 14,
+            "numberOfBeds": 79,
+            "maximumAttendeeCapacity": 79,
+            "servesCuisine": "כשר — בשרי",
+            "hasMenu": "%VITE_SITE_URL%/docs/menu-shabbat.pdf",
+            "makesOffer": [
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "שבת חתן", "description": "אירוח מלא לשבת חתן — לינה, שלוש סעודות, אולם פרטי ומתחם תפילה." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "שבת שבע ברכות", "description": "אירוח לשבת שבע ברכות במתחם סגור לאורחי האירוע." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "שבת התעלות", "description": "שבתות התעלות לבחורי ישיבות, בנות סמינר ומשפחות, עם תפילות ודרשות." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "לינה בלבד", "description": "הזמנת חדרים במועדים פנויים, ללא סעודות." } }
+            ]
+          },
+          {
+            "@type": "Organization",
+            "@id": "%VITE_SITE_URL%/#institutions",
+            "name": "מוסדות הרב אייל עמרמי",
+            "url": "https://ayal-taarog.org.il/",
+            "sameAs": ["https://ayal-taarog.org.il/"]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "%VITE_SITE_URL%/#website",
+            "url": "%VITE_SITE_URL%/",
+            "name": "מתחם האירוח כאייל תערוג",
+            "inLanguage": "he-IL",
+            "publisher": { "@id": "%VITE_SITE_URL%/#institutions" }
+          }
+        ]
       }
     </script>
   </head>

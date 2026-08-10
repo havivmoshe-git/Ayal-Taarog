@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import MobileBar from './components/MobileBar';
 import SectionRenderer from './components/SectionRenderer';
+import DocumentHead from './components/DocumentHead';
 
 /**
  * The page is now assembled from the content document rather than hard-coded.
@@ -14,6 +15,7 @@ export default function App() {
 
   return (
     <>
+      <DocumentHead />
       <Header />
       <main>
         {visible.map((section) => (

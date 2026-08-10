@@ -93,6 +93,15 @@ export default function FeedbackPage() {
   // is a form. Set on mount only; it is not worth an effect dependency.
   useEffect(() => {
     if (copy?.title) document.title = `${copy.title} — ${content.seo.title}`;
+
+    // This page is a private link sent to a guest, not a search result.
+    // robots.txt keeps crawlers from fetching it; this keeps it out of the
+    // index even if someone links to it publicly.
+    const tag = document.createElement('meta');
+    tag.name = 'robots';
+    tag.content = 'noindex, nofollow';
+    document.head.appendChild(tag);
+    return () => tag.remove();
   }, [copy?.title, content.seo.title]);
 
   if (!copy) return null;

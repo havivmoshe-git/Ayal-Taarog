@@ -285,6 +285,32 @@ export type SeoInfo = {
   description: string;
 };
 
+/**
+ * The standalone page guests are sent after their stay. Every string is
+ * editable, because the wording of an invitation to criticise you is exactly
+ * the kind of thing an owner will want to tune.
+ */
+export type FeedbackPageInfo = {
+  eyebrow: string;
+  title: string;
+  intro: string;
+  nameLabel: string;
+  contextLabel: string;
+  contextHint: string;
+  ratingLabel: string;
+  quoteLabel: string;
+  quoteHint: string;
+  privateLabel: string;
+  privateHint: string;
+  phoneLabel: string;
+  phoneHint: string;
+  consentLabel: string;
+  submit: string;
+  thanksTitle: string;
+  thanksBody: string;
+  backCta: string;
+};
+
 export type SiteContent = {
   /** Bumped when the shape changes so old stored documents can be migrated. */
   version: number;
@@ -293,6 +319,7 @@ export type SiteContent = {
   contact: ContactInfo;
   footer: FooterInfo;
   seo: SeoInfo;
+  feedbackPage?: FeedbackPageInfo;
   sections: Section[];
 };
 

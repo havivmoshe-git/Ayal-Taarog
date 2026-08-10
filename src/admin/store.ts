@@ -37,6 +37,23 @@ export type LeadIntent = {
   device: string | null;
 };
 
+export type FeedbackStatus = 'pending' | 'approved' | 'rejected';
+
+export type Feedback = {
+  id: number;
+  at: string;
+  status: FeedbackStatus;
+  name: string | null;
+  context: string | null;
+  rating: number | null;
+  quote: string | null;
+  privateNote: string | null;
+  phone: string | null;
+  consent: boolean;
+  device: string | null;
+  publishedAt: string | null;
+};
+
 export type Insights = {
   days: number;
   visits: number;
@@ -79,6 +96,11 @@ export interface ContentStore {
   insights(days: number): Promise<Insights | null>;
   leads(limit?: number): Promise<LeadIntent[]>;
   deleteLead(id: number): Promise<void>;
+
+  /* Guest feedback */
+  feedback(): Promise<Feedback[]>;
+  setFeedbackStatus(id: number, status: FeedbackStatus, publishedAt?: string | null): Promise<void>;
+  deleteFeedback(id: number): Promise<void>;
 }
 
 /* ── Local store ──────────────────────────────────────────────────────── */
@@ -184,6 +206,18 @@ class LocalStore implements ContentStore {
 
   async deleteLead() {
     // Nothing is recorded without a server.
+  }
+
+  async feedback(): Promise<Feedback[]> {
+    return [];
+  }
+
+  async setFeedbackStatus() {
+    // Nothing to moderate without a server.
+  }
+
+  async deleteFeedback() {
+    // Nothing to moderate without a server.
   }
 }
 
@@ -370,6 +404,46 @@ class SupabaseStore implements ContentStore {
   async deleteLead(id: number) {
     const sb = await getSupabase();
     const { error } = await sb.from('lead_intents').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+  }
+
+  /* ── Guest feedback ───────────────────────────────────────────────── */
+
+  async feedback(): Promise<Feedback[]> {
+    const sb = await getSupabase();
+    const { data, error } = await sb
+      .from('feedback')
+      .select('*')
+      .order('at', { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r) => ({
+      id: r.id as number,
+      at: r.at as string,
+      status: r.status as FeedbackStatus,
+      name: (r.name as string | null) ?? null,
+      context: (r.context as string | null) ?? null,
+      rating: (r.rating as number | null) ?? null,
+      quote: (r.quote as string | null) ?? null,
+      privateNote: (r.private_note as string | null) ?? null,
+      phone: (r.phone as string | null) ?? null,
+      consent: Boolean(r.consent),
+      device: (r.device as string | null) ?? null,
+      publishedAt: (r.published_at as string | null) ?? null,
+    }));
+  }
+
+  async setFeedbackStatus(id: number, status: FeedbackStatus, publishedAt?: string | null) {
+    const sb = await getSupabase();
+    const patch: Record<string, unknown> = { status };
+    if (publishedAt !== undefined) patch.published_at = publishedAt;
+    const { error } = await sb.from('feedback').update(patch).eq('id', id);
+    if (error) throw new Error(error.message);
+  }
+
+  async deleteFeedback(id: number) {
+    const sb = await getSupabase();
+    const { error } = await sb.from('feedback').delete().eq('id', id);
     if (error) throw new Error(error.message);
   }
 }

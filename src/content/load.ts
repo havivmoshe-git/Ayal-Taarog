@@ -83,6 +83,7 @@ function overlay(published: SiteContent): SiteContent {
     contact: { ...snapshot.contact, ...published.contact },
     footer: { ...snapshot.footer, ...published.footer },
     seo: { ...snapshot.seo, ...published.seo },
+    feedbackPage: { ...snapshot.feedbackPage!, ...published.feedbackPage },
     sections: published.sections.map((section) => {
       const original = bySnapshotId.get(section.id);
       if (!original || original.type !== section.type) return section;

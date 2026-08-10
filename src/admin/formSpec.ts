@@ -380,7 +380,11 @@ export const FORM_SPEC: Record<SectionType, Field[]> = {
  * numbers, the footer, and the text search engines and WhatsApp previews show.
  * Same field vocabulary as the sections, so the same renderer draws them.
  */
-export const SITE_GROUPS: { key: 'contact' | 'footer' | 'seo'; label: string; fields: Field[] }[] = [
+export const SITE_GROUPS: {
+  key: 'contact' | 'footer' | 'seo' | 'feedbackPage';
+  label: string;
+  fields: Field[];
+}[] = [
   {
     key: 'contact',
     label: 'פרטי קשר',
@@ -409,6 +413,36 @@ export const SITE_GROUPS: { key: 'contact' | 'footer' | 'seo'; label: string; fi
       { kind: 'text', key: 'instituteLink', label: 'תווית הקישור למוסדות' },
       { kind: 'text', key: 'catalogLink', label: 'תווית הקישור לקטלוג' },
       { kind: 'text', key: 'rights', label: 'שורת זכויות' },
+    ],
+  },
+  {
+    key: 'feedbackPage',
+    label: 'דף הפידבק',
+    fields: [
+      { kind: 'text', key: 'eyebrow', label: 'כותרת עליונה קטנה' },
+      { kind: 'text', key: 'title', label: 'כותרת' },
+      { kind: 'textarea', key: 'intro', label: 'משפט הפתיחה', rows: 3 },
+      { kind: 'text', key: 'nameLabel', label: 'תווית — שם' },
+      { kind: 'text', key: 'contextLabel', label: 'תווית — מתי התארחתם' },
+      { kind: 'text', key: 'contextHint', label: 'דוגמה — מתי התארחתם' },
+      { kind: 'text', key: 'ratingLabel', label: 'תווית — דירוג' },
+      { kind: 'text', key: 'quoteLabel', label: 'תווית — מה אהבתם' },
+      { kind: 'textarea', key: 'quoteHint', label: 'הסבר — מה אהבתם', rows: 2 },
+      { kind: 'text', key: 'privateLabel', label: 'תווית — מה לשפר' },
+      {
+        kind: 'textarea',
+        key: 'privateHint',
+        label: 'הסבר — מה לשפר',
+        rows: 3,
+        hint: 'ההבטחה שהטקסט הזה לא יפורסם היא מה שגורם לאנשים לכתוב בכנות. אל תסירו אותה.',
+      },
+      { kind: 'text', key: 'phoneLabel', label: 'תווית — טלפון' },
+      { kind: 'text', key: 'phoneHint', label: 'הסבר — טלפון' },
+      { kind: 'textarea', key: 'consentLabel', label: 'תיבת האישור לפרסום', rows: 2 },
+      { kind: 'text', key: 'submit', label: 'כפתור השליחה' },
+      { kind: 'text', key: 'thanksTitle', label: 'כותרת תודה' },
+      { kind: 'textarea', key: 'thanksBody', label: 'טקסט תודה', rows: 2 },
+      { kind: 'text', key: 'backCta', label: 'כפתור חזרה לאתר' },
     ],
   },
   {

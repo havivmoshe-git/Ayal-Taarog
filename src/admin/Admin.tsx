@@ -12,6 +12,7 @@ import Review from './Review';
 import History from './History';
 import Insights from './Insights';
 import GalleryManager from './GalleryManager';
+import FeedbackQueue from './FeedbackQueue';
 import { isConfigured, store, type Session } from './store';
 
 export default function Admin() {
@@ -110,11 +111,12 @@ function Login({ onSignedIn }: { onSignedIn: (s: Session) => void }) {
 /* ── Workspace ────────────────────────────────────────────────────────── */
 
 type Pane = 'edit' | 'preview';
-type View = 'sections' | 'site' | 'gallery' | 'history' | 'insights' | 'review';
+type View = 'sections' | 'site' | 'gallery' | 'feedback' | 'history' | 'insights' | 'review';
 
 const TABS: { view: View; label: string }[] = [
   { view: 'sections', label: 'מקטעים' },
   { view: 'gallery', label: 'גלריה' },
+  { view: 'feedback', label: 'פידבק' },
   { view: 'site', label: 'פרטים' },
   { view: 'insights', label: 'נתונים' },
   { view: 'history', label: 'היסטוריה' },
@@ -136,9 +138,20 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
   const [query, setQuery] = useState('');
   const [pane, setPane] = useState<Pane>('edit');
 
+  const [pendingFeedback, setPendingFeedback] = useState(0);
+
   const frame = useRef<HTMLIFrameElement>(null);
   const frameReady = useRef(false);
   const lastSnapshot = useRef(0);
+
+  // A new feedback is the one thing that arrives without the owner doing
+  // anything, so it needs to announce itself rather than wait to be found.
+  useEffect(() => {
+    store
+      .feedback()
+      .then((all) => setPendingFeedback(all.filter((f) => f.status === 'pending').length))
+      .catch(() => {});
+  }, [view]);
 
   useEffect(() => {
     Promise.all([store.loadDraft(), store.loadPublished().catch(() => null)])
@@ -458,6 +471,11 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
                   }`}
                 >
                   {tab.label}
+                  {tab.view === 'feedback' && pendingFeedback > 0 && (
+                    <span className="mr-1 inline-flex size-4 items-center justify-center rounded-full bg-gold-500 text-[10px] text-navy-950 ltr-nums">
+                      {pendingFeedback}
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>
@@ -483,6 +501,12 @@ function Workspace({ session, onSignOut }: { session: Session; onSignOut: () => 
                   setStatus(label);
                   setView('sections');
                 }}
+                onBack={() => setView('sections')}
+              />
+            ) : view === 'feedback' ? (
+              <FeedbackQueue
+                content={content}
+                onChange={(next) => update(next)}
                 onBack={() => setView('sections')}
               />
             ) : view === 'insights' ? (

@@ -55,6 +55,46 @@ function isSiteContent(value: unknown): value is SiteContent {
 }
 
 /**
+ * Lays the published document over the bundled snapshot.
+ *
+ * The published document was written by whatever version of the app last
+ * pressed publish, so it knows nothing about fields added to the code since.
+ * Replacing the snapshot with it wholesale means a newly shipped field renders
+ * for one frame from the snapshot and then vanishes when this arrives — which
+ * is exactly what the logo did.
+ *
+ * So the two are merged, and the rule is: anything the owner can control comes
+ * from the published document, and only genuinely absent keys fall back to the
+ * snapshot.
+ *
+ * - Section membership, order, `enabled`, `schedule` and `navLabel` are taken
+ *   verbatim. A deleted section stays deleted and a cleared nav label stays
+ *   cleared; the snapshot never resurrects a decision.
+ * - Inside `data`, published keys win and missing ones fall back. A field the
+ *   owner emptied is stored as "" — a real value, which wins. A key is absent
+ *   only when the code grew it after the last publish, which is the one case
+ *   this exists for.
+ */
+function overlay(published: SiteContent): SiteContent {
+  const bySnapshotId = new Map(snapshot.sections.map((s) => [s.id, s]));
+
+  return {
+    ...published,
+    contact: { ...snapshot.contact, ...published.contact },
+    footer: { ...snapshot.footer, ...published.footer },
+    seo: { ...snapshot.seo, ...published.seo },
+    sections: published.sections.map((section) => {
+      const original = bySnapshotId.get(section.id);
+      if (!original || original.type !== section.type) return section;
+      return {
+        ...section,
+        data: { ...original.data, ...section.data },
+      } as Section;
+    }),
+  };
+}
+
+/**
  * Fetch the published document. Returns null on any failure — a missing or
  * malformed response must never be able to blank the site, so every error path
  * simply leaves the snapshot in place.
@@ -76,10 +116,13 @@ export async function fetchPublished(): Promise<SiteContent | null> {
     const json: unknown = await res.json();
     if (!isSiteContent(json)) return null;
     if (json.version > CONTENT_VERSION) return null; // built by a newer app than this one
-    return json;
+    return overlay(json);
   } catch {
     return null;
   }
 }
 
 export { snapshot };
+
+/** Exposed for the overlay tests; not part of the runtime surface. */
+export { overlay as __overlayForTests };

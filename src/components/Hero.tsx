@@ -39,12 +39,28 @@ export default function Hero({ data, id }: { data: HeroData; id: string }) {
       <div className="absolute inset-0 bg-navy-900/25 mix-blend-multiply" />
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-navy-950/80 to-transparent" />
 
-      <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-16 pt-28 sm:px-6 sm:pb-20">
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-16 pt-20 sm:px-6 sm:pb-20 sm:pt-28">
         {/*
-          The crest, sized to be recognised rather than read. Its inner lines
-          are a few pixels tall here and the hero repeats all of them
-          underneath in type meant for reading — this is a mark, and it earns
-          its place by looking like one.
+          The crest, sized from the viewport rather than fixed.
+
+          The rest of the hero needs about 650px, and a real phone offers
+          around 664px of visible page once the browser's own chrome is taken
+          out. A fixed 150px crest therefore did not sit in spare room — there
+          was none — it pushed the second button and the scroll hint off the
+          bottom. The height here is what is genuinely left over: 100svh minus
+          what the hero below needs, floored so it never shrinks to a speck and
+          capped so it never dominates. On a tall screen it is 104px, on a
+          short one 60px, and the page keeps the shape it had before.
+
+          Below 620px of viewport there is no room for it at any size — the
+          hero alone needs 617px — so it is hidden rather than allowed to push
+          the WhatsApp button off the screen. A crest is worth less than a way
+          to make contact.
+
+          The top padding drops from 28 to 20 on a phone when the crest is
+          there: that padding existed to clear the fixed header, and the crest
+          now occupies part of the same band. Reclaiming it is what buys the
+          mark a presentable size instead of a 36px speck.
 
           A drop shadow rather than a plate behind it: the plaque already has
           its own gold edge, and a second frame would fight it. The shadow is
@@ -54,15 +70,11 @@ export default function Hero({ data, id }: { data: HeroData; id: string }) {
           <img
             src={mediaUrl(data.logo, 'sm')}
             srcSet={`${mediaUrl(data.logo, 'sm')} 600w, ${mediaUrl(data.logo, 'lg')} 1600w`}
-            sizes="(max-width: 640px) 150px, 200px"
+            sizes="(max-width: 640px) 120px, 190px"
             alt={data.logoAlt || data.brand}
             width={890}
             height={814}
-            // Centred on a phone, where the column is narrow enough that it
-            // reads as one composition. From `sm` up it aligns with the start
-            // of the text instead — a crest floating in the middle of an
-            // otherwise right-aligned block looks stranded.
-            className="hero-in mx-auto mb-6 h-auto w-[150px] drop-shadow-[0_6px_20px_rgba(0,0,0,0.55)] sm:mb-8 sm:ms-0 sm:me-auto sm:w-[200px]"
+            className="hero-in mx-auto mb-2 [@media(max-height:620px)]:hidden h-[clamp(60px,calc(100svh-620px),104px)] w-auto drop-shadow-[0_6px_20px_rgba(0,0,0,0.55)] sm:mb-6 sm:ms-0 sm:me-auto sm:h-[clamp(72px,calc(100svh-748px),144px)]"
           />
         )}
 

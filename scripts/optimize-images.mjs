@@ -18,7 +18,13 @@ import sharp from 'sharp';
 
 const SOURCE_DIR = 'assets/source';
 const OUT_DIR = 'public/gallery';
-const OG_SOURCE = 'hall-tables-set.jpg';
+/**
+ * The picture WhatsApp shows when the link is shared. It is its own file
+ * rather than a gallery photograph: a share card is cropped to 1200x630 and
+ * seen at thumbnail size, so it wants a frame chosen for that shape, and
+ * changing it should not mean changing what the gallery shows.
+ */
+const OG_SOURCE = 'og-share.jpg';
 
 const VARIANTS = [
   { suffix: 'sm', width: 600, quality: 72 },
@@ -41,7 +47,9 @@ const TEXT_VARIANTS = [
 await rm(OUT_DIR, { recursive: true, force: true });
 await mkdir(OUT_DIR, { recursive: true });
 
-const files = (await readdir(SOURCE_DIR)).filter((f) => /\.(jpe?g|png)$/i.test(f)).sort();
+const files = (await readdir(SOURCE_DIR))
+  .filter((f) => /\.(jpe?g|png)$/i.test(f) && f !== OG_SOURCE)
+  .sort();
 
 if (files.length === 0) {
   console.error(`No source images found in ${SOURCE_DIR}`);

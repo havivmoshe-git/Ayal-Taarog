@@ -65,7 +65,7 @@ export default function Header() {
                 alt=""
                 width={890}
                 height={814}
-                className="h-7 w-auto shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] sm:h-8"
+                className="h-10 w-auto shrink-0 drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] sm:h-11"
               />
             )}
             <span className="font-display text-lg font-black sm:text-xl">{hero?.brand}</span>
@@ -140,7 +140,7 @@ export default function Header() {
           <div className="flex items-center justify-between px-5 py-4">
             <span className="flex items-center gap-2">
               {hero?.logo && (
-                <img src={mediaUrl(hero.logo, 'sm')} alt="" width={890} height={814} className="h-7 w-auto shrink-0" />
+                <img src={mediaUrl(hero.logo, 'sm')} alt="" width={890} height={814} className="h-10 w-auto shrink-0" />
               )}
               <span className="font-display text-lg font-black text-cream-50">{hero?.brand}</span>
             </span>

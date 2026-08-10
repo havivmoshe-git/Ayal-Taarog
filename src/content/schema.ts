@@ -47,6 +47,9 @@ type Base<T extends SectionType, D> = {
 /* ── Section payloads ─────────────────────────────────────────────────── */
 
 export type HeroData = {
+  /** The crest at the top of the hero. Empty hides it. */
+  logo?: string;
+  logoAlt?: string;
   eyebrow: string;
   brand: string;
   kicker: string;

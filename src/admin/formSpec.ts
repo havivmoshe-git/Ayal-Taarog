@@ -57,6 +57,8 @@ const HEADING: Field[] = [
 
 export const FORM_SPEC: Record<SectionType, Field[]> = {
   hero: [
+    { kind: 'image', key: 'logo', label: 'לוגו', hint: 'ריק = לא מוצג' },
+    { kind: 'text', key: 'logoAlt', label: 'תיאור הלוגו', hint: 'לקוראי מסך ולגוגל' },
     { kind: 'text', key: 'eyebrow', label: 'בס״ד / כיתוב עליון' },
     { kind: 'text', key: 'kicker', label: 'שורה מעל השם' },
     { kind: 'text', key: 'brand', label: 'שם המתחם' },

@@ -40,6 +40,32 @@ export default function Hero({ data, id }: { data: HeroData; id: string }) {
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-navy-950/80 to-transparent" />
 
       <div className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-16 pt-28 sm:px-6 sm:pb-20">
+        {/*
+          The crest, sized to be recognised rather than read. Its inner lines
+          are a few pixels tall here and the hero repeats all of them
+          underneath in type meant for reading — this is a mark, and it earns
+          its place by looking like one.
+
+          A drop shadow rather than a plate behind it: the plaque already has
+          its own gold edge, and a second frame would fight it. The shadow is
+          what keeps that edge legible over a bright ceiling.
+        */}
+        {data.logo && (
+          <img
+            src={mediaUrl(data.logo, 'sm')}
+            srcSet={`${mediaUrl(data.logo, 'sm')} 600w, ${mediaUrl(data.logo, 'lg')} 1600w`}
+            sizes="(max-width: 640px) 150px, 200px"
+            alt={data.logoAlt || data.brand}
+            width={890}
+            height={814}
+            // Centred on a phone, where the column is narrow enough that it
+            // reads as one composition. From `sm` up it aligns with the start
+            // of the text instead — a crest floating in the middle of an
+            // otherwise right-aligned block looks stranded.
+            className="hero-in mx-auto mb-6 h-auto w-[150px] drop-shadow-[0_6px_20px_rgba(0,0,0,0.55)] sm:mb-8 sm:ms-0 sm:me-auto sm:w-[200px]"
+          />
+        )}
+
         <p className="hero-in mb-4 font-display text-sm font-bold tracking-[0.3em] text-gold-300">
           {data.eyebrow}
         </p>

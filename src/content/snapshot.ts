@@ -33,6 +33,8 @@ export const snapshot: SiteContent = {
       type: 'hero',
       enabled: true,
       data: {
+        logo: 'logo',
+        logoAlt: 'מתחם האירוח כאייל תערוג, בית הכנסת חסדי שמואל, הר חומה ירושלים',
         ...c.hero,
         imageWide: 'hall-shabbat-meal',
         imagePortrait: 'hall-place-setting',

@@ -225,3 +225,52 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/*
+ * iOS form controls.
+ *
+ * Safari gives `date`, `time` and `number` inputs an intrinsic width derived
+ * from their own formatting, and — unlike every other input — refuses to
+ * shrink below it. `w-full` is therefore ignored and the field renders wider
+ * than the card it sits in, which is exactly what happened to the event date
+ * in the enquiry form: the white box ran off the side of the page.
+ *
+ * `min-width: 0` is the part that actually fixes it. Removing the native
+ * appearance stops Safari reserving room for its own decorations, and
+ * `max-width: 100%` is the belt to that pair of braces.
+ */
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'],
+input[type='month'],
+input[type='number'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Safari centres the value inside a date field and ignores `text-align` on
+   the input itself; this is the element that actually holds the text. */
+input[type='date']::-webkit-date-and-time-value,
+input[type='time']::-webkit-date-and-time-value {
+  text-align: right;
+  margin: 0;
+}
+
+/* Without this the picker icon sits at the inline end on iOS but the far left
+   on Chrome, so the two platforms disagree about where to tap. */
+input[type='date']::-webkit-calendar-picker-indicator {
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+}
+
+/* Every field is a flex or grid child somewhere. A flex item's default
+   `min-width: auto` lets its content push it past its container, which is the
+   same failure in a different costume — a long unbroken URL or a wide input
+   overflowing the card that holds it. */
+input,
+select,
+textarea {
+  box-sizing: border-box;
+}

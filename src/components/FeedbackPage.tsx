@@ -37,8 +37,12 @@ function StarPicker({
   const shown = hover || value;
 
   return (
+    // Fluid, not fixed. Five 40px stars plus their gaps need 264px, and a
+    // 320px phone leaves about 208px inside the card — so at a fixed size they
+    // ran off the edge. Each star takes an equal share of whatever room there
+    // is, capped so they do not become comical on a wide screen.
     <div
-      className="flex justify-center gap-1.5"
+      className="mx-auto flex w-full max-w-[280px] justify-center gap-1.5"
       role="radiogroup"
       aria-label="דירוג"
       onMouseLeave={() => setHover(0)}
@@ -54,11 +58,11 @@ function StarPicker({
           onMouseEnter={() => setHover(n)}
           // Generous hit area: this is the one control everyone will use, on a
           // phone, probably one-handed.
-          className="p-1 transition-transform active:scale-90"
+          className="min-w-0 flex-1 p-1 transition-transform active:scale-90"
         >
           <svg
             viewBox="0 0 20 20"
-            className={`size-10 transition-colors duration-150 ${
+            className={`h-auto w-full transition-colors duration-150 ${
               n <= shown ? 'text-gold-500' : 'text-stone-400/35'
             }`}
             fill="currentColor"

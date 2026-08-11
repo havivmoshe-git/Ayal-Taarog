@@ -96,8 +96,15 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
           onSubmit={handleSubmit}
           className="rounded-2xl border border-white/10 bg-cream-50 p-6 shadow-2xl sm:p-8"
         >
+          {/*
+            `min-w-0` on every cell is the other half of the iOS date fix. A
+            grid item defaults to `min-width: auto`, meaning it refuses to
+            shrink below its content — and Safari's date input reports a much
+            wider intrinsic size than Chrome's. The cell then pushes past the
+            card, which is what put the event date off the side of the screen.
+          */}
           <div className="grid gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+            <div className="min-w-0 sm:col-span-2">
               <label className={labelClass} htmlFor="name">
                 {data.labels.name}
               </label>
@@ -114,7 +121,7 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
               />
             </div>
 
-            <div className="sm:col-span-2">
+            <div className="min-w-0 sm:col-span-2">
               <label className={labelClass} htmlFor="phone">
                 {data.labels.phone ?? 'טלפון'}
               </label>
@@ -131,7 +138,7 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className={labelClass} htmlFor="dateGregorian">
                 {data.labels.dateGregorian}
               </label>
@@ -145,7 +152,7 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className={labelClass} htmlFor="dateHebrew">
                 {data.labels.dateHebrew}
               </label>
@@ -160,7 +167,7 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className={labelClass} htmlFor="guests">
                 {data.labels.guests}
               </label>
@@ -178,7 +185,7 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
               />
             </div>
 
-            <div>
+            <div className="min-w-0">
               <label className={labelClass} htmlFor="type">
                 {data.labels.type}
               </label>
@@ -197,7 +204,7 @@ export default function LeadForm({ data, id }: { data: LeadFormData; id: string 
               </select>
             </div>
 
-            <div className="sm:col-span-2">
+            <div className="min-w-0 sm:col-span-2">
               <label className={labelClass} htmlFor="notes">
                 {data.labels.notes}
               </label>
